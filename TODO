@@ -1,0 +1,5 @@
++ Limit DSS to only allow printable unicode characters [1]
++ Implement device type in presence according to specs [2]
+
+[1](https://github.com/matrix-org/matrix-doc/blob/master/drafts/human-id-rules.rst)
+[2](https://github.com/matrix-org/matrix-doc/blob/master/specification/00_basis.rst#id12)
