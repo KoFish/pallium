@@ -46,6 +46,9 @@ func createRoom(db *sql.DB, user *s.User, w http.ResponseWriter, r *http.Request
         resp       createRoomResponse
         visibility m.RoomVisibility = m.ROOM_PRIVATE
     )
+    if !u.CheckTxnId(r) {
+        return nil, u.NewError(m.M_FORBIDDEN, "Request has already been sent")
+    }
     body, err := ioutil.ReadAll(r.Body)
     if err != nil {
         return nil, err
@@ -135,4 +138,5 @@ func createRoom(db *sql.DB, user *s.User, w http.ResponseWriter, r *http.Request
 
 func setupRooms(root *mux.Router) {
     root.HandleFunc("/createRoom", u.JSONWithAuthReply(createRoom)).Methods("POST")
+    root.HandleFunc("/createRoom/{txnId:[0-9]+}", u.JSONWithAuthReply(createRoom)).Methods("PUT")
 }
