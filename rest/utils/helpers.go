@@ -12,6 +12,8 @@
 //    See the License for the specific language governing permissions and
 //    limitations under the License.
 
+// The rest/utils package supplies some tools that are useful when processing
+// REST requests and generating their responses.
 package utils
 
 import (
@@ -25,6 +27,9 @@ var (
     prevrequest = map[string]uint64{}
 )
 
+// Check if a certain request is a PUT and has a txnId in their request. If it
+// does and the access token of the requests hasn't already made a request with
+// the same txnId `true` is returned, otherwise `false`.
 func CheckTxnId(r *http.Request) bool {
     vars := mux.Vars(r)
     token := r.URL.Query().Get("access_token")
@@ -43,6 +48,8 @@ func CheckTxnId(r *http.Request) bool {
     return true
 }
 
+// By calling this in a request handler the http://matrix.org live test tool
+// is able to make requests.
 func AllowMatrixOrg(w http.ResponseWriter, r *http.Request) {
     w.Header().Set("Access-Control-Allow-Origin", "http://matrix.org")
     w.Header().Set("Access-Control-Allow-Headers", "Content-Type")

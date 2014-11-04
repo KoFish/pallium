@@ -20,4 +20,5 @@ import (
 )
 
 func setupFederation(sub *mux.Router) {
+    // TODO(kofish): Federation needs to be implemented.
 }

@@ -12,6 +12,9 @@
 //    See the License for the specific language governing permissions and
 //    limitations under the License.
 
+// The rest package deals with serving up the REST API for the server. This is
+// where all the processing goes and requests are made to the storage package
+// for fetching the actual information.
 package rest
 
 import (

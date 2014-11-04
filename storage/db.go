@@ -12,6 +12,8 @@
 //    See the License for the specific language governing permissions and
 //    limitations under the License.
 
+// The storage package manages setting up the database ond knows how to fetch
+// and update all relevant data.
 package storage
 
 import (
@@ -23,6 +25,8 @@ var (
     gDB *sql.DB
 )
 
+// The DBI is something that can do something on a database, normally either a
+// `*sql.DB` or a `*sql.Tx`.
 type DBI interface {
     Exec(string, ...interface{}) (sql.Result, error)
     Query(string, ...interface{}) (*sql.Rows, error)

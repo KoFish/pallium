@@ -14,6 +14,8 @@
 
 package matrix
 
+// Enumerates the protocol defined errors that can be returned when performing
+// a REST request to the server.
 type ErrorCode string
 
 const (

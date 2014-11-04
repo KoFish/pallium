@@ -15,7 +15,9 @@
 package matrix
 
 type (
+    // Is used when creating rooms to indicate if they are public or private.
     RoomVisibility string
+    // Enumerates the different kinds of membership a user can have in a room.
     RoomMembership string
 )
 

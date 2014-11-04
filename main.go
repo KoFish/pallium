@@ -12,6 +12,7 @@
 //    See the License for the specific language governing permissions and
 //    limitations under the License.
 
+// Pallium is a homeserver for http://matrix.org implemented in Go.
 package main
 
 import (
