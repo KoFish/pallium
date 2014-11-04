@@ -41,7 +41,7 @@ func Setup() {
 }
 
 func Start() {
-    if err := http.ListenAndServe(fmt.Sprintf(":%i", c.Port), nil); err != nil {
+    if err := http.ListenAndServe(fmt.Sprintf(":%v", c.Port), nil); err != nil {
         fmt.Printf("matrix: could not start up server\n >> %v\n", err)
     }
 }
