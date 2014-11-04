@@ -23,11 +23,6 @@ import (
     "time"
 )
 
-var (
-    _m   = m.M_BAD_JSON
-    _sql = sql.Open
-)
-
 const events_table = `
 CREATE TABLE IF NOT EXISTS
 events(
