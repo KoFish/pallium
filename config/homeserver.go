@@ -16,6 +16,7 @@
 package config
 
 const (
+    Port                     int    = 8008
     Hostname                 string = "example.com"
     DefaultPowerLevel        int64  = 50
     DefaultCreatorPowerLevel int64  = 100
