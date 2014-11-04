@@ -20,7 +20,6 @@ import (
     m "github.com/KoFish/pallium/matrix"
 )
 
-// These are adapted from https://github.com/matrix-org/synapse/blob/master/synapse/storage/schema/im.sql
 const rooms_table = ""
 
 type Room struct {
