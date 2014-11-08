@@ -107,5 +107,8 @@ func GenerateEventID() (ev EventID, err error) {
         return NoEventID
     }
     evid := bytes.Join([][]byte{rstr, nowb, idb}, []byte{})
-    return NewEventID(strings.Replace(base64.URLEncoding.EncodeToString(evid), "=", "", -1), c.Hostname)
+    encstr := strings.Replace(base64.URLEncoding.EncodeToString(evid), "=", "", -1)
+    encstr = strings.Replace(encstr, "$", ".", -1)
+    encstr = strings.Replace(encstr, ":", ".", -1)
+    return NewEventID(encstr, c.Hostname)
 }
