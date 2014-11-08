@@ -33,7 +33,7 @@ var (
 func CheckTxnId(r *http.Request) bool {
     vars := mux.Vars(r)
     token := r.URL.Query().Get("access_token")
-    if stxnId := vars["txnId"]; r.Method == "PUT" && stxnId != "" {
+    if stxnId, ok := vars["txnId"]; ok && r.Method == "PUT" && stxnId != "" {
         if txnId, err := strconv.ParseUint(stxnId, 10, 64); err == nil {
             // ip := strings.Split(r.RemoteAddr, ":")[0]
             // if prevrequest[ip] == txnId {
