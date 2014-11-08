@@ -55,4 +55,10 @@ func TestParseInvalidUID(t *testing.T) {
     if err == nil {
         t.Fail()
     }
+
+    uid, err = ParseUserID("!kofish:matrix.org")
+    t.Log("Parse '!kofish:matrix.org':", uid.String())
+    if err == nil {
+        t.Fail()
+    }
 }
