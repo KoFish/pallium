@@ -35,6 +35,10 @@ type DomainSpecificString struct {
     is_mine   bool
 }
 
+func (dss DomainSpecificString) Compare(b DomainSpecificString) bool {
+    return dss.sigil == b.sigil && dss.localpart == b.localpart && dss.domain == b.domain
+}
+
 func (dss DomainSpecificString) String() string {
     return fmt.Sprintf("%s%s:%s", dss.sigil, dss.localpart, dss.domain)
 }
