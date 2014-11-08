@@ -15,20 +15,22 @@
 package matrix
 
 type (
-    // Is used when creating rooms to indicate if they are public or private.
-    RoomVisibility string
-    // Enumerates the different kinds of membership a user can have in a room.
     RoomMembership string
+    // Enumerates the different kinds of join rules that a room  can have.
+    RoomJoinRule string
 )
 
 const (
-    ROOM_PUBLIC  RoomVisibility = "public"
-    ROOM_PRIVATE RoomVisibility = "private"
-)
-
-const (
+    MEMBERSHIP_NONE   RoomMembership = "none"
     MEMBERSHIP_INVITE RoomMembership = "invite"
     MEMBERSHIP_JOIN   RoomMembership = "join"
     MEMBERSHIP_LEAVE  RoomMembership = "leave"
     MEMBERSHIP_BAN    RoomMembership = "ban"
+)
+
+const (
+    JOIN_PUBLIC  RoomJoinRule = "public"
+    JOIN_KNOCK   RoomJoinRule = "knock"
+    JOIN_INVITE  RoomJoinRule = "invite"
+    JOIN_PRIVATE RoomJoinRule = "private"
 )

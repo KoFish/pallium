@@ -27,24 +27,20 @@ import (
     "net/http"
 )
 
-type createRoomRequest struct {
-    Visibility    string   `json:"visibility,omitempty"`
-    RoomAliasName string   `json:"room_alias_name,omitempty"`
-    Name          string   `json:"name,omitempty"`
-    Topic         string   `json:"topic,omitempty"`
-    Invite        []string `json:"invite,omitempty"`
-}
-
-type createRoomResponse struct {
-    RoomID    string `json:"room_id"`
-    RoomAlias string `json:"room_alias,omitempty"`
-}
-
 func createRoom(db *sql.DB, user *s.User, w http.ResponseWriter, r *http.Request) (interface{}, error) {
     var (
-        req        createRoomRequest
-        resp       createRoomResponse
-        visibility m.RoomVisibility = m.ROOM_PRIVATE
+        req struct {
+            Visibility    string   `json:"visibility,omitempty"`
+            RoomAliasName string   `json:"room_alias_name,omitempty"`
+            Name          string   `json:"name,omitempty"`
+            Topic         string   `json:"topic,omitempty"`
+            Invite        []string `json:"invite,omitempty"`
+        }
+        resp struct {
+            RoomID    string `json:"room_id"`
+            RoomAlias string `json:"room_alias,omitempty"`
+        }
+        join_rule m.RoomJoinRule = m.JOIN_INVITE
     )
     if !u.CheckTxnId(r) {
         return nil, u.NewError(m.M_FORBIDDEN, "Request has already been sent")
@@ -60,23 +56,24 @@ func createRoom(db *sql.DB, user *s.User, w http.ResponseWriter, r *http.Request
     if err != nil {
         return nil, u.NewError(m.M_FORBIDDEN, "Could not create database transaction: "+err.Error())
     }
-    room, err := s.CreateRoom(tx, user.UserID)
-    if err != nil {
-        tx.Rollback()
-        return nil, u.NewError(m.M_FORBIDDEN, "Could not create room event: "+err.Error())
-    }
     if req.Visibility != "" {
         switch req.Visibility {
         case "public":
-            visibility = m.ROOM_PUBLIC
+            join_rule = m.JOIN_PUBLIC
         case "private":
-            visibility = m.ROOM_PRIVATE
+            join_rule = m.JOIN_INVITE
         default:
             tx.Rollback()
             return nil, u.NewError(m.M_BAD_JSON, "Unknown room visibility: "+req.Visibility)
         }
     }
-    if err := room.UpdateJoinRule(tx, user.UserID, visibility); err != nil {
+    is_public := join_rule == m.JOIN_PUBLIC || join_rule == m.JOIN_KNOCK
+    room, err := s.CreateRoom(tx, user.UserID, is_public)
+    if err != nil {
+        tx.Rollback()
+        return nil, u.NewError(m.M_FORBIDDEN, "Could not create room event: "+err.Error())
+    }
+    if err := room.UpdateJoinRule(tx, user.UserID, join_rule); err != nil {
         tx.Rollback()
         return nil, u.NewError(m.M_FORBIDDEN, "Could not update join rule: "+err.Error())
     }
@@ -102,6 +99,10 @@ func createRoom(db *sql.DB, user *s.User, w http.ResponseWriter, r *http.Request
             tx.Rollback()
             return nil, u.NewError(m.M_FORBIDDEN, "Could not update room name")
         }
+    }
+    if err := room.UpdateMember(tx, user.UserID, user.UserID, m.MEMBERSHIP_JOIN); err != nil {
+        tx.Rollback()
+        return nil, u.NewError(m.M_FORBIDDEN, "Could not add creator as member of new room: "+err.Error())
     }
     if len(req.Invite) > 0 {
         for _, invitee := range req.Invite {
@@ -130,13 +131,130 @@ func createRoom(db *sql.DB, user *s.User, w http.ResponseWriter, r *http.Request
         tx.Rollback()
         return nil, u.NewError(m.M_FORBIDDEN, "Could not set ops levels for room"+err.Error())
     }
-    rid := room.ID.String()
-    resp = createRoomResponse{rid, ""}
+    resp.RoomID = room.ID.String()
     tx.Commit()
     return resp, nil
 }
 
+func joinRoom(db *sql.DB, user *s.User, w http.ResponseWriter, r *http.Request) (interface{}, error) {
+    var (
+        req  struct{}
+        resp struct {
+            RoomID string `json:"room_id"`
+        }
+        room_id m.RoomID
+    )
+    if !u.CheckTxnId(r) {
+        return nil, u.NewError(m.M_FORBIDDEN, "Request has already been sent")
+    }
+    vars := mux.Vars(r)
+    q_room, _ := vars["room"]
+    body, err := ioutil.ReadAll(r.Body)
+    if err != nil {
+        return nil, err
+    }
+    if err = json.Unmarshal(body, &req); err != nil {
+        return nil, u.NewError(m.M_NOT_JSON, "Could not parse json: "+err.Error())
+    }
+    if room_alias, err := m.ParseRoomAlias(q_room); err != nil {
+        if room_id, err = m.ParseRoomID(q_room); err != nil {
+            return nil, u.NewError(m.M_FORBIDDEN, "Could not parse room identifier argument to a room ID")
+        }
+    } else {
+        if room_id, err = s.LookupRoomAlias(db, room_alias); err != nil {
+            return nil, u.NewError(m.M_FORBIDDEN, "Could not resolve room alias to room id: "+err.Error())
+        }
+    }
+    tx, err := db.Begin()
+    if err != nil {
+        return nil, u.NewError(m.M_FORBIDDEN, "Could not start database transaction: "+err.Error())
+    }
+    room := s.Room{room_id}
+    if err := room.CheckedUpdateMember(tx, user.UserID, user.UserID, m.MEMBERSHIP_JOIN); err != nil {
+        tx.Rollback()
+        return nil, u.NewError(m.M_FORBIDDEN, "Could not join room: "+err.Error())
+    }
+    tx.Commit()
+    resp.RoomID = room_id.String()
+    return resp, nil
+}
+
+// func leaveRoom(db *sql.DB, user *s.User, w http.ResponseWriter, r *http.Request) (interface{}, error) {
+//     var (
+//         req  leaveRoomRequest
+//         resp leaveRoomResponse
+//     )
+//     if !u.CheckTxnId(r) {
+//         return nil, u.NewError(m.M_FORBIDDEN, "Request has already been sent")
+//     }
+//     vars := mux.Vars(r)
+//     q_room := r.URL.Query().Get("room")
+//     body, err := ioutil.ReadAll(r.Body)
+//     if err != nil {
+//         return nil, err
+//     }
+//     if err = json.Unmarshal(body, &req); err != nil {
+//         return nil, u.NewError(m.M_NOT_JSON, "Could not parse json: "+err.Error())
+//     }
+//     resp = leaveRoomResponse{rid}
+//     return resp, nil
+// }
+
+// func inviteRoom(db *sql.DB, user *s.User, w http.ResponseWriter, r *http.Request) (interface{}, error) {
+//     var (
+//         req  inviteRoomRequest
+//         resp inviteRoomResponse
+//     )
+//     if !u.CheckTxnId(r) {
+//         return nil, u.NewError(m.M_FORBIDDEN, "Request has already been sent")
+//     }
+//     vars := mux.Vars(r)
+//     q_room := r.URL.Query().Get("room")
+//     body, err := ioutil.ReadAll(r.Body)
+//     if err != nil {
+//         return nil, err
+//     }
+//     if err = json.Unmarshal(body, &req); err != nil {
+//         return nil, u.NewError(m.M_NOT_JSON, "Could not parse json: "+err.Error())
+//     }
+//     resp = inviteRoomResponse{rid}
+//     return resp, nil
+// }
+
+// func setRoomState(db *sql.DB, user *s.User, w http.ResponseWriter, r *http.Request) (interface{}, error) {
+//     var (
+//         req  roomStateRequest
+//         resp roomStateResponse
+//     )
+//     if !u.CheckTxnId(r) {
+//         return nil, u.NewError(m.M_FORBIDDEN, "Request has already been sent")
+//     }
+//     vars := mux.Vars(r)
+//     q_room := r.URL.Query().Get("room")
+//     q_state_type := r.URL.Query().Get("state_type")
+//     q_state_key := r.URL.Query().Get("state_key")
+//     body, err := ioutil.ReadAll(r.Body)
+//     if err != nil {
+//         return nil, err
+//     }
+//     if err = json.Unmarshal(body, &req); err != nil {
+//         return nil, u.NewError(m.M_NOT_JSON, "Could not parse json: "+err.Error())
+//     }
+//     resp = roomStateResponse{rid}
+//     return resp, nil
+// }
+
 func setupRooms(root *mux.Router) {
     root.HandleFunc("/createRoom", u.JSONWithAuthReply(createRoom)).Methods("POST")
     root.HandleFunc("/createRoom/{txnId:[0-9]+}", u.JSONWithAuthReply(createRoom)).Methods("PUT")
+    root.HandleFunc("/join/{room}", u.JSONWithAuthReply(joinRoom)).Methods("POST")
+    root.HandleFunc("/join/{room}/{txnId:[0-9]+}", u.JSONWithAuthReply(joinRoom)).Methods("PUT")
+    root.HandleFunc("/rooms/{room}/join", u.JSONWithAuthReply(joinRoom)).Methods("POST")
+    root.HandleFunc("/rooms/{room}/join/{txnId:[0-9]+}", u.JSONWithAuthReply(joinRoom)).Methods("PUT")
+    // root.HandleFunc("/rooms/{room}/leave", u.JSONWithAuthReply(leaveRoom)).Methods("POST")
+    // root.HandleFunc("/rooms/{room}/leave/{txnId:[0-9]+}", u.JSONWithAuthReply(leaveRoom)).Methods("PUT")
+    // root.HandleFunc("/rooms/{room}/invite", u.JSONWithAuthReply(inviteRoom)).Methods("POST")
+    // root.HandleFunc("/rooms/{room}/invite/{txnId:[0-9]+}", u.JSONWithAuthReply(inviteRoom)).Methods("PUT")
+    // root.HandleFunc("/rooms/{room}/state/{state_type}/{state_key}", u.JSONWithAuthReply(setRoomState)).Methods("POST")
+    // root.HandleFunc("/rooms/{room}/state/{state_type}/{state_key}/{txnId:[0-9]+}", u.JSONWithAuthReply(inviteRoom)).Methods("PUT")
 }
