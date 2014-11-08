@@ -30,6 +30,17 @@ type (
     EventID   struct{ DomainSpecificString }
 )
 
+var (
+    // Default invalid Room ID
+    NoRoomID RoomID = RoomID{}
+    // Default invalid User ID
+    NoUserID UserID = UserID{}
+    // Default invalid Event ID
+    NoEventID EventID = EventID{}
+    // Default invalid Room Alias
+    NoRoomAlias RoomAlias = RoomAlias{}
+)
+
 func NewUserID(localpart, domain string) (UserID, error) {
     dss, err := makeDSS("@", localpart, domain)
     return UserID{dss}, err
@@ -48,7 +59,7 @@ func NewRoomID(localpart, domain string) (RoomID, error) {
 func GenerateRoomID() (RoomID, error) {
     rstr := make([]byte, 10)
     if _, err := rand.Read(rstr); err != nil {
-        return RoomID{}, err
+        return NoRoomID, err
     }
     localpart := strings.Replace(base64.URLEncoding.EncodeToString(rstr), "=", "", -1)
     return NewRoomID(localpart, c.Hostname)
@@ -93,7 +104,7 @@ func GenerateEventID() (ev EventID, err error) {
     nowb := bytes.TrimLeft(toBytes(time.Now().Unix()), "\x00")
     rstr := make([]byte, 5)
     if _, err := rand.Read(rstr); err != nil {
-        return NewEventID("", "")
+        return NoEventID
     }
     evid := bytes.Join([][]byte{rstr, nowb, idb}, []byte{})
     return NewEventID(strings.Replace(base64.URLEncoding.EncodeToString(evid), "=", "", -1), c.Hostname)
