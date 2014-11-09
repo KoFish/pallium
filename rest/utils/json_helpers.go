@@ -55,9 +55,16 @@ func JSONReplyHandler(handler JSONResponseFunc) HandlerFunc {
 }
 
 func DBAccessHandler(handler JSONDBResponseFunc) JSONResponseFunc {
-    responsefunc := func(w http.ResponseWriter, r *http.Request) (interface{}, error) {
+    responsefunc := func(w http.ResponseWriter, r *http.Request) (ret interface{}, err error) {
         db := s.GetDatabase()
-        return handler(db, w, r)
+        defer func() {
+            if r := recover(); r != nil {
+                ret = nil
+                err = NewError(m.M_FORBIDDEN, "Could not access database")
+            }
+        }()
+        ret, err = handler(db, w, r)
+        return
     }
     return responsefunc
 }
