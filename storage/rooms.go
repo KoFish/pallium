@@ -459,10 +459,13 @@ func (r *Room) CheckedUpdateMember(tx *sql.Tx, sender, target m.UserID, new_memb
         room_ban_level    int64
         room_kick_level   int64
     )
+    is_self := sender.Compare(target.DomainSpecificString)
     if user_membership, err = r.GetUserMembership(tx, target); err != nil {
         user_membership = m.MEMBERSHIP_NONE
     }
-    if user_membership != new_membership {
+    if is_self && user_membership == new_membership {
+        return nil
+    } else {
         if room_join_rule, err = r.GetJoinRule(tx); err != nil {
             return fmt.Errorf("matrix: no join rules defined: " + err.Error())
         }
@@ -496,7 +499,9 @@ func (r *Room) CheckedUpdateMember(tx *sql.Tx, sender, target m.UserID, new_memb
         if s_banned {
             return fmt.Errorf("matrix: user %v is banned from this room", sender.String())
         }
-        is_self := sender.Compare(target.DomainSpecificString)
+        if !is_self && sender_membership != m.MEMBERSHIP_JOIN {
+            return fmt.Errorf("matrix: not joined to room")
+        }
         switch new_membership {
         case m.MEMBERSHIP_JOIN:
             if !canJoin(is_self, r_public, u_invited) {
