@@ -33,15 +33,15 @@ type DBI interface {
     QueryRow(string, ...interface{}) *sql.Row
 }
 
-func GetDatabase() (db *sql.DB, err error) {
+func GetDatabase() *sql.DB {
     if gDB == nil {
-        db, err = sql.Open("sqlite3", "test.db")
-        gDB = db
-    } else {
-        db = gDB
-        err = nil
+        if db, err := sql.Open("sqlite3", "test.db"); err != nil {
+            panic("matrix: could not open database: " + err.Error())
+        } else {
+            gDB = db
+        }
     }
-    return
+    return gDB
 }
 
 func Setup() error {
@@ -54,10 +54,7 @@ func Setup() error {
         "access_token_table": access_token_table,
     }
 
-    db, err := GetDatabase()
-    if err != nil {
-        return err
-    }
+    db := GetDatabase()
     tx, err := db.Begin()
     if err != nil {
         panic("Could not open database transaction")

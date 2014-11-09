@@ -56,10 +56,7 @@ func JSONReplyHandler(handler JSONResponseFunc) HandlerFunc {
 
 func DBAccessHandler(handler JSONDBResponseFunc) JSONResponseFunc {
     responsefunc := func(w http.ResponseWriter, r *http.Request) (interface{}, error) {
-        db, err := s.GetDatabase()
-        if err != nil {
-            return nil, NewError(m.M_FORBIDDEN, "Could not access database")
-        }
+        db := s.GetDatabase()
         return handler(db, w, r)
     }
     return responsefunc
@@ -73,10 +70,7 @@ func RequireAuth(handler AuthorizedFunc) JSONResponseFunc {
         if token == "" {
             return nil, NewError(m.M_FORBIDDEN, "You are not authorized to access this resource")
         }
-        db, err := s.GetDatabase()
-        if err != nil {
-            return nil, NewError(m.M_FORBIDDEN, "Could not establish connection to database: "+err.Error())
-        }
+        db := s.GetDatabase()
         user, err := s.GetUserByToken(db, s.Token(token))
         if err != nil {
             return nil, NewError(m.M_UNKNOWN_TOKEN, "Could not verify token")
