@@ -104,7 +104,7 @@ func GenerateEventID() (ev EventID, err error) {
     nowb := bytes.TrimLeft(toBytes(time.Now().Unix()), "\x00")
     rstr := make([]byte, 5)
     if _, err := rand.Read(rstr); err != nil {
-        return NoEventID
+        return NoEventID, err
     }
     evid := bytes.Join([][]byte{rstr, nowb, idb}, []byte{})
     encstr := strings.Replace(base64.URLEncoding.EncodeToString(evid), "=", "", -1)
