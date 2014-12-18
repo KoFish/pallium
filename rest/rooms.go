@@ -246,6 +246,7 @@ func joinRoom(db *sql.DB, user *s.User, w http.ResponseWriter, r *http.Request) 
 
 func setupRooms(root *mux.Router) {
     root.HandleFunc("/createRoom", u.JSONWithAuthReply(createRoom)).Methods("POST")
+    root.HandleFunc("/createRoom", u.OptionsReply()).Methods("OPTIONS")
     root.HandleFunc("/createRoom/{txnId:[0-9]+}", u.JSONWithAuthReply(createRoom)).Methods("PUT")
     root.HandleFunc("/join/{room}", u.JSONWithAuthReply(joinRoom)).Methods("POST")
     root.HandleFunc("/join/{room}/{txnId:[0-9]+}", u.JSONWithAuthReply(joinRoom)).Methods("PUT")
