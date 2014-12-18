@@ -120,9 +120,19 @@ type Room struct {
     ID m.RoomID
 }
 
-func LookupRoomAlias(db DBI, room_alias m.RoomAlias) (m.RoomID, error) {
+func LookupRoomAlias(db DBI, room_alias m.RoomAlias) (m.RoomID, []string, error) {
     // TODO(kofish): Implement resolving room aliases to room ids
-    return m.NoRoomID, fmt.Errorf("matrix: LookupRoomAlias is not yet implemented")
+    return m.NoRoomID, []string{}, fmt.Errorf("matrix: LookupRoomAlias is not yet implemented")
+}
+
+func GetRoom(db DBI, room_id m.RoomID) (*Room, error) {
+    var exists bool
+    row := db.QueryRow("SELECT true FROM rooms WHERE room_id=?", room_id.String())
+    if err := row.Scan(&exists); err != nil {
+        return nil, fmt.Errorf("matrix: no such room exists")
+    } else {
+        return &Room{room_id}, nil
+    }
 }
 
 func CreateRoom(tx *sql.Tx, creator m.UserID, is_public bool) (*Room, error) {
@@ -275,7 +285,7 @@ func (r *Room) UpdateAliases(tx *sql.Tx, sender m.UserID, new_aliases []m.RoomAl
         aliases[i] = new_aliases[i].String()
     }
     content := map[string]interface{}{"aliases": aliases}
-    if event_id, err = NewStateEvent(tx, sender, r.ID, "m.room.new_aliases", "", content); err != nil {
+    if event_id, err = NewStateEvent(tx, sender, r.ID, "m.room.aliases", "", content); err != nil {
         return
     } else {
         for i := range new_aliases {
