@@ -17,7 +17,7 @@ package config
 
 const (
     Port                     int    = 8008
-    Hostname                 string = "example.com"
+    Hostname                 string = "m.skaverat.net"
     DefaultPowerLevel        int64  = 50
     DefaultCreatorPowerLevel int64  = 100
 )

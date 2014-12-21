@@ -37,6 +37,7 @@ func Setup() {
     setupFederation(federation_v1)
     setupProfile(client_api_v1)
 
+
     // http.Handle("/", client_api_v1)
     http.Handle("/", root)
 }
