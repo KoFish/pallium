@@ -56,7 +56,7 @@ func (dss DomainSpecificString) IsMine() bool {
 }
 
 func makeDSS(sigil, localpart, domain string) (dss DomainSpecificString, err error) {
-    dss = DomainSpecificString{sigil, localpart, domain, domain == c.Hostname}
+    dss = DomainSpecificString{sigil, localpart, domain, domain == c.Config.Hostname}
     if len(localpart) == 0 {
         err = errors.New("Local part of new domain specific string is empty")
     } else if strings.IndexAny(localpart, sigil+":") > -1 {
@@ -74,7 +74,7 @@ func parseDSS(sigil, s string) (dss DomainSpecificString, err error) {
     err = nil
     s = strings.Trim(s, " \t\n\r")
     if !strings.HasPrefix(s, sigil) {
-        s = "@" + s + ":" + c.Hostname
+        s = "@" + s + ":" + c.Config.Hostname
     }
     if i := strings.LastIndex(s, ":"); i >= 0 {
         localpart := s[1:i]

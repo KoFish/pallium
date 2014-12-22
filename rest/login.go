@@ -112,7 +112,7 @@ func (loginInfo *PasswordLoginRequest) submitLoginPassword(db *sql.DB, w http.Re
         return nil, u.NewError(m.M_FORBIDDEN, "Invalid User ID: "+err.Error())
     }
 
-    if user_id.Domain() != c.Hostname {
+    if user_id.Domain() != c.Config.Hostname {
         return nil, u.NewError(m.M_FORBIDDEN, "Can not register user namespaced to other host.")
     }
 

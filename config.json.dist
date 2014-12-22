@@ -1,0 +1,6 @@
+{
+"port": 8008,
+"hostname": "example.com",
+"DefaultPowerLevel": 50,
+"DefaultCreatorPowerLevel": 100
+}

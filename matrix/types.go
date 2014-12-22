@@ -62,7 +62,7 @@ func GenerateRoomID() (RoomID, error) {
         return NoRoomID, err
     }
     localpart := strings.Replace(base64.URLEncoding.EncodeToString(rstr), "=", "", -1)
-    return NewRoomID(localpart, c.Hostname)
+    return NewRoomID(localpart, c.Config.Hostname)
 }
 
 func ParseRoomID(s string) (RoomID, error) {
@@ -110,5 +110,5 @@ func GenerateEventID() (ev EventID, err error) {
     encstr := strings.Replace(base64.URLEncoding.EncodeToString(evid), "=", "", -1)
     encstr = strings.Replace(encstr, "$", ".", -1)
     encstr = strings.Replace(encstr, ":", ".", -1)
-    return NewEventID(encstr, c.Hostname)
+    return NewEventID(encstr, c.Config.Hostname)
 }

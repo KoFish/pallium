@@ -147,7 +147,7 @@ func GetPowerLevel(db DBI, room_id m.RoomID, state_key string) (int64, error) {
     var power_level int64
     row := db.QueryRow("SELECT power_level FROM state_power_levels WHERE room_id=? AND state_key=?", room_id.String(), state_key)
     if err := row.Scan(&power_level); err != nil {
-        return c.DefaultPowerLevel, err
+        return c.Config.DefaultPowerLevel, err
     }
     return power_level, nil
 }

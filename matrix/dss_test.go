@@ -15,7 +15,7 @@
 package matrix
 
 import "testing"
-import c "github.com/KoFish/pallium/config"
+import "github.com/KoFish/pallium/config"
 
 func TestParseValidUID(t *testing.T) {
     uid, err := ParseUserID("@kofish:matrix.org")
@@ -26,7 +26,7 @@ func TestParseValidUID(t *testing.T) {
 
     uid, err = ParseUserID("kofish")
     t.Log("Parse 'kofish':", uid.String())
-    if uid.String() != "@kofish:"+c.Hostname || err != nil {
+    if uid.String() != "@kofish:"+Config.Hostname || err != nil {
         t.Fail()
     }
 }

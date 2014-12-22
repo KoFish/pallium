@@ -15,9 +15,27 @@
 // Package handling the static configurations of the homeserver
 package config
 
-const (
-    Port                     int    = 8008
-    Hostname                 string = "m.skaverat.net"
-    DefaultPowerLevel        int64  = 50
-    DefaultCreatorPowerLevel int64  = 100
+import (
+    "os"
+    "encoding/json"
 )
+
+var Config = load()
+
+type Configuration struct {
+    Port                     int    `json:"port"`
+    Hostname                 string `json:"hostname"`
+    DefaultPowerLevel        int64  `json:"DefaultPowerLevel"`
+    DefaultCreatorPowerLevel int64  `json:"DefaultCreatorPowerLevel"`
+}
+
+func load() Configuration {
+    config := Configuration{}
+
+    file,_ := os.Open("config.json")
+    decoder := json.NewDecoder(file)
+    err := decoder.Decode(&config)
+    if(err != nil) {panic("could not decode or find config. Copy config.json.dist to config.json")}
+
+    return config
+}

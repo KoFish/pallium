@@ -480,11 +480,11 @@ func (r *Room) CheckedUpdateMember(tx *sql.Tx, sender, target m.UserID, new_memb
             return fmt.Errorf("matrix: no join rules defined: " + err.Error())
         }
         if room_ban_level, room_kick_level, _, err = r.GetOpsLevels(tx); err != nil {
-            room_ban_level = c.DefaultPowerLevel
-            room_kick_level = c.DefaultPowerLevel
+            room_ban_level = c.Config.DefaultPowerLevel
+            room_kick_level = c.Config.DefaultPowerLevel
         }
         if room_invite_level, err = r.GetInviteLevel(tx); err != nil {
-            room_invite_level = c.DefaultPowerLevel
+            room_invite_level = c.Config.DefaultPowerLevel
         }
         if sender_membership, err = r.GetUserMembership(tx, sender); err != nil {
             sender_membership = m.MEMBERSHIP_NONE

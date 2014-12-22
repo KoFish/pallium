@@ -4,3 +4,6 @@
 
 #Database
 *.db
+
+#config
+config.json

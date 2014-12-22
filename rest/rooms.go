@@ -196,20 +196,20 @@ func createRoom(db *sql.DB, user *s.User, w http.ResponseWriter, r *http.Request
 			}
 		}
 	}
-	var default_power_level int64 = c.DefaultPowerLevel
-	if err := room.UpdatePowerLevels(tx, user.UserID, map[m.UserID]int64{user.UserID: c.DefaultCreatorPowerLevel}, &default_power_level); err != nil {
+	var default_power_level int64 = c.Config.DefaultPowerLevel
+	if err := room.UpdatePowerLevels(tx, user.UserID, map[m.UserID]int64{user.UserID: c.Config.DefaultCreatorPowerLevel}, &default_power_level); err != nil {
 		tx.Rollback()
 		return nil, u.NewError(m.M_FORBIDDEN, "Could not set creator powerlevel"+err.Error())
 	}
-	if err := room.UpdateAddStateLevel(tx, user.UserID, c.DefaultPowerLevel); err != nil {
+	if err := room.UpdateAddStateLevel(tx, user.UserID, c.Config.DefaultPowerLevel); err != nil {
 		tx.Rollback()
 		return nil, u.NewError(m.M_FORBIDDEN, "Could not set 'add state' power level"+err.Error())
 	}
-	if err := room.UpdateSendEventLevel(tx, user.UserID, c.DefaultPowerLevel); err != nil {
+	if err := room.UpdateSendEventLevel(tx, user.UserID, c.Config.DefaultPowerLevel); err != nil {
 		tx.Rollback()
 		return nil, u.NewError(m.M_FORBIDDEN, "Could not set 'send event' power level"+err.Error())
 	}
-	if err := room.UpdateOpsLevel(tx, user.UserID, map[string]int64{"ban": c.DefaultPowerLevel, "kick": c.DefaultPowerLevel, "redact": c.DefaultPowerLevel}); err != nil {
+	if err := room.UpdateOpsLevel(tx, user.UserID, map[string]int64{"ban": c.Config.DefaultPowerLevel, "kick": c.Config.DefaultPowerLevel, "redact": c.Config.DefaultPowerLevel}); err != nil {
 		tx.Rollback()
 		return nil, u.NewError(m.M_FORBIDDEN, "Could not set ops levels for room"+err.Error())
 	}
