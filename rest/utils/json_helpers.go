@@ -32,7 +32,7 @@ type JSONDBResponseFunc func(*sql.DB, http.ResponseWriter, *http.Request) (inter
 func JSONReplyHandler(handler JSONResponseFunc) HandlerFunc {
     responsefunc := func(w http.ResponseWriter, r *http.Request) {
         w.Header().Set("Content-Type", "application/json")
-        w.Header().Set("Access-Control-Allow-Origin", "http://matrix.org")
+        w.Header().Set("Access-Control-Allow-Origin", "*")
         w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
         enc := json.NewEncoder(w)
         if data, err := handler(w, r); err != nil {

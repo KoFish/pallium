@@ -20,7 +20,6 @@ import (
     "github.com/gorilla/mux"
     "net/http"
     "strconv"
-    // "strings"
 )
 
 var (
@@ -51,7 +50,7 @@ func CheckTxnId(r *http.Request) bool {
 // By calling this in a request handler the http://matrix.org live test tool
 // is able to make requests.
 func AllowMatrixOrg(w http.ResponseWriter, r *http.Request) {
-    w.Header().Set("Access-Control-Allow-Origin", "http://matrix.org")
+    w.Header().Set("Access-Control-Allow-Origin", "*")
     w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
     w.WriteHeader(200)
 }
