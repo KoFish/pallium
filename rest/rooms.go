@@ -27,6 +27,15 @@ import (
 	"net/http"
 )
 
+type room struct {
+	Aliases       []string `json:"aliases"`
+	Name          string   `json:"name"`
+	JoinedMembers int	   `json:"num_joined_members"`
+	RoomId        string   `json:"room_id"`
+	Topic		  string   `json:"topic"`
+}
+
+
 // func roomAliasLookup(db *sql.DB, user *s.User, w http.ResponseWriter, r *http.Request) (interface{}, error) {
 //     var (
 //         req  struct{}
@@ -261,6 +270,20 @@ func joinRoom(db *sql.DB, user *s.User, w http.ResponseWriter, r *http.Request) 
 	return resp, nil
 }
 
+func listPublicRooms(db *sql.DB, user *s.User, w http.ResponseWriter, r *http.Request) (interface{}, error) {
+	var (
+		res struct {
+			Chunk []room `json:"chunk"`
+			End   string `json:"end"`
+			Start string `json:"start"`}
+	)
+	res.Start = "START"
+	res.End = "END"
+//	res.Chunk = append(res.Chunk, room{Name:"foobar"})
+
+	return res, nil
+}
+
 // func leaveRoom(db *sql.DB, user *s.User, w http.ResponseWriter, r *http.Request) (interface{}, error) {
 //     var (
 //         req  leaveRoomRequest
@@ -366,6 +389,7 @@ func setupRooms(root *mux.Router) {
 	root.HandleFunc("/join/{room}/{txnId:[0-9]+}", u.JSONWithAuthReply(joinRoom)).Methods("PUT")
 	root.HandleFunc("/rooms/{room}/join", u.JSONWithAuthReply(joinRoom)).Methods("POST")
 	root.HandleFunc("/rooms/{room}/join/{txnId:[0-9]+}", u.JSONWithAuthReply(joinRoom)).Methods("PUT")
+	root.HandleFunc("/publicRooms", u.JSONWithAuthReply(listPublicRooms)).Methods("GET")
 	// root.HandleFunc("/rooms/{room}/leave", u.JSONWithAuthReply(leaveRoom)).Methods("POST")
 	// root.HandleFunc("/rooms/{room}/leave/{txnId:[0-9]+}", u.JSONWithAuthReply(leaveRoom)).Methods("PUT")
 	// root.HandleFunc("/rooms/{room}/invite", u.JSONWithAuthReply(inviteRoom)).Methods("POST")
