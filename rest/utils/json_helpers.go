@@ -98,9 +98,10 @@ func JSONWithAuthReply(handler AuthorizedFunc) HandlerFunc {
 func OptionsReply() HandlerFunc {
 	responsefunc := func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		w.Header().Set("Access-Control-Allow-Origin", "http://matrix.org")
-		w.Header().Set("Access-Control-Allow-Methods", "POST")
-		w.Header().Set("Allow", "POST,GET")
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "POST,GET,PUT,OPTIONS")
+        w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+		w.Header().Set("Allow", "POST,GET,PUT,OPTIONS")
 	}
 	return responsefunc
 }
