@@ -39,18 +39,18 @@ const (
 )
 
 var (
-    PresenceStates map[int]string = map[int]string{
-        20: "free for chat",
-        10: "online",
-        5:  "unavailable",
-        1:  "hidden",
-        0:  "offline",
+    PresenceStates map[string]PresenceState = map[string]PresenceState{
+        "free for chat": P_FREEFORCHAT,
+        "online": P_ONLINE,
+        "unavailable": P_UNAVAILABLE,
+        "hidden": P_HIDDEN,
+        "offline": P_OFFLINE,
     }
 )
 
 func (u *User) UpdatePresence(db DBI, newpresence PresenceState, message string) error {
     now := time.Now().UnixNano() / int64(time.Millisecond)
-    result, err := db.Exec("INSERT OR FAIL INTO presence SET user_id=?, state=?, status_msg=?, mtime=?", u.ID, int(newpresence), message, now)
+    result, err := db.Exec("INSERT OR FAIL INTO presence VALUES(?,?,?,?)", u.ID, int(newpresence), message, now)
     if err != nil {
         return err
     }

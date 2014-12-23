@@ -36,6 +36,7 @@ func Setup() {
     setupRooms(client_api_v1)
     setupFederation(federation_v1)
     setupProfile(client_api_v1)
+    setupPresence(client_api_v1)
 
 
     // http.Handle("/", client_api_v1)
