@@ -33,7 +33,7 @@ type Profile struct {
 }
 
 func NewProfile(db DBI, u *User) (*Profile, error) {
-    result, err := db.Exec("INSERT OR FAIL INTO profiles SET display_name=?, avatar_url=?, user_id=?", "", "", u.ID)
+    result, err := db.Exec("INSERT OR FAIL INTO profiles VALUES(?,?,?)",u.ID, "", "")
     if err != nil {
         return nil, err
     }

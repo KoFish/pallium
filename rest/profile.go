@@ -12,8 +12,27 @@ import (
 
 func setupProfile(root *mux.Router) {
 	root.HandleFunc("/profile/{profile}/avatar_url", u.JSONWithAuthReply(getAvatarUrl)).Methods("GET")
+	root.HandleFunc("/profile/{profile}/displayname", u.OptionsReply()).Methods("OPTIONS")
+	root.HandleFunc("/profile/{profile}/displayname", u.JSONWithAuthReply(getDisplayName)).Methods("GET")
 }
 
+func getDisplayName(db *sql.DB, user *s.User, w http.ResponseWriter, r *http.Request) (interface{}, error) {
+	var (
+		resp struct {
+			DisplayName string `json:"display_name"`
+		}
+	)
+
+	profile,err := user.GetProfile(db)
+	if(err != nil) {
+		fmt.Println(err)
+		resp.DisplayName = ""
+	}else{
+		resp.DisplayName = profile.DisplayName
+	}
+
+	return resp, nil
+}
 
 func getAvatarUrl(db *sql.DB, user *s.User, w http.ResponseWriter, r *http.Request) (interface{}, error) {
 
