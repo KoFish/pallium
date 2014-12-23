@@ -116,8 +116,18 @@ room_memberships (
 )
 `
 
+//type Room struct {
+//    ID m.RoomID `sql:"room_id"`
+//}
+
+
 type Room struct {
-    ID m.RoomID
+    Aliases       []string `json:"aliases"`
+    Name          string   `json:"name"`
+    JoinedMembers int	   `json:"num_joined_members"`
+    RoomId        string   `json:"room_id"`
+    Topic		  string   `json:"topic"`
+    ID            m.RoomID `json:"-"`
 }
 
 func LookupRoomAlias(db DBI, room_alias m.RoomAlias) (m.RoomID, []string, error) {
@@ -131,8 +141,33 @@ func GetRoom(db DBI, room_id m.RoomID) (*Room, error) {
     if err := row.Scan(&exists); err != nil {
         return nil, fmt.Errorf("matrix: no such room exists")
     } else {
-        return &Room{room_id}, nil
+        return &Room{ID: room_id}, nil
     }
+}
+
+func GetPublicRooms(tx *sql.Tx) ([]Room) {
+    rows,err := tx.Query(
+        `SELECT r.room_id as id, count(rm.room_id) as membercount
+        FROM rooms r, room_memberships rm
+        WHERE is_public = 1 AND r.room_id = rm.room_id`)
+
+    if(err != nil) {fmt.Println(err); return nil}
+    defer rows.Close()
+
+    var rooms []Room
+
+    for rows.Next() {
+        var (
+            roomId string
+            memberCount int
+        )
+        err := rows.Scan(&roomId, &memberCount)
+        if(err != nil) {fmt.Println(err); return nil}
+        room := Room{RoomId: roomId, JoinedMembers: memberCount}
+        rooms = append(rooms, room)
+    }
+
+    return rooms
 }
 
 func CreateRoom(tx *sql.Tx, creator m.UserID, is_public bool) (*Room, error) {
@@ -155,7 +190,7 @@ func CreateRoom(tx *sql.Tx, creator m.UserID, is_public bool) (*Room, error) {
             return nil, err
         }
     }
-    return &Room{room_id}, nil
+    return &Room{ID: room_id}, nil
 }
 
 func (r *Room) GetUserPowerLevel(db DBI, user_id m.UserID) (int64, error) {

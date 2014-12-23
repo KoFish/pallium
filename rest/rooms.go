@@ -260,7 +260,7 @@ func joinRoom(db *sql.DB, user *s.User, w http.ResponseWriter, r *http.Request) 
 	if err != nil {
 		return nil, u.NewError(m.M_FORBIDDEN, "Could not start database transaction: "+err.Error())
 	}
-	room := s.Room{room_id}
+	room := s.Room{ID: room_id}
 	if err := room.CheckedUpdateMember(tx, user.UserID, user.UserID, m.MEMBERSHIP_JOIN); err != nil {
 		tx.Rollback()
 		return nil, u.NewError(m.M_FORBIDDEN, "Could not join room: "+err.Error())
@@ -273,13 +273,18 @@ func joinRoom(db *sql.DB, user *s.User, w http.ResponseWriter, r *http.Request) 
 func listPublicRooms(db *sql.DB, user *s.User, w http.ResponseWriter, r *http.Request) (interface{}, error) {
 	var (
 		res struct {
-			Chunk []room `json:"chunk"`
+			Chunk []s.Room `json:"chunk"`
 			End   string `json:"end"`
 			Start string `json:"start"`}
 	)
 	res.Start = "START"
 	res.End = "END"
-//	res.Chunk = append(res.Chunk, room{Name:"foobar"})
+
+
+	tx,_ := db.Begin()
+	rooms := s.GetPublicRooms(tx)
+
+	res.Chunk = rooms
 
 	return res, nil
 }
