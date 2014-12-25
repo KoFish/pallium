@@ -18,6 +18,7 @@ import (
     "database/sql"
     "fmt"
     m "github.com/KoFish/pallium/matrix"
+    o "github.com/KoFish/pallium/objects"
     u "github.com/KoFish/pallium/rest/utils"
     s "github.com/KoFish/pallium/storage"
     "github.com/gorilla/mux"
@@ -29,47 +30,22 @@ var (
     _ = fmt.Println
 )
 
-type (
-    Content map[string]interface{}
-)
-
-type Event struct {
-    EventID   string  `json:"event_id"`
-    EventType string  `json:"type"`
-    Content   Content `json:"content"`
-    RoomID    string  `json:"room_id"`
-    UserID    string  `json:"user_id"`
-}
-
 type StateEvent struct {
-    Event
+    Event         o.Event
     StateKey      string  `json:"state_key"`
     ReqPowerLevel int64   `json:"required_power_level"`
-    PrevContent   Content `json:"prev_content"`
+    PrevContent   o.Content `json:"prev_content"`
 }
 
 type InitialSyncEvent struct {
     Type    string  `json:"type"`
-    Content Content `json:"content"`
-}
-
-type InitialSyncRoomData struct {
-    Membership string           `json:"membership"`
-    RoomID     string           `json:"room_id"`
-    Messages   *PaginationChunk `json:"messages,omitempty"`
-    State      []Event          `json:"state,omitempty"`
-}
-
-type PaginationChunk struct {
-    Start string  `json:"start"`
-    End   string  `json:"end"`
-    Chunk []Event `json:"chunk"`
+    Content o.Content `json:"content"`
 }
 
 type InitialSync struct {
     End      string                `json:"end"`
     Presence []InitialSyncEvent    `json:"presence,omitempty"`
-    Rooms    []InitialSyncRoomData `json:"rooms,omitempty"`
+    Rooms    []o.InitialSyncRoomData `json:"rooms,omitempty"`
 }
 
 func getLimit(r *http.Request, def uint64) (limit uint64, err error) {
@@ -82,12 +58,16 @@ func getLimit(r *http.Request, def uint64) (limit uint64, err error) {
     return
 }
 
-func getInitialRoomStates(db s.DBI, user *s.User, limit uint64) ([]InitialSyncRoomData, error) {
-    return nil, nil
+func getInitialRoomStates(db s.DBI, user *s.User, limit uint64) ([]o.InitialSyncRoomData, error) {
+
+    value, err := user.GetRoomMemberships(db)
+
+    if(err != nil){ fmt.Println(err) }
+    return value, nil
 }
 
 func getInitialEvents(db s.DBI, user *s.User) ([]InitialSyncEvent, error) {
-    content := Content{}
+    content := o.Content{}
     content["user_id"] = "@skaverat:m.skaverat.net"
     ev := InitialSyncEvent{"m.presence", content}
     return []InitialSyncEvent{ev}, nil

@@ -21,6 +21,7 @@ import (
     "encoding/hex"
     "fmt"
     m "github.com/KoFish/pallium/matrix"
+    o "github.com/KoFish/pallium/objects"
     "time"
 )
 
@@ -90,6 +91,30 @@ func GetUser(db DBI, uid m.UserID) (*User, error) {
     }
     return &User{DBID(id), uid, PasswordHash{password, salt}, Timestamp(creation_ts), nil}, nil
 }
+
+
+func (u *User) GetRoomMemberships(db DBI) ([]o.InitialSyncRoomData, error) {
+    rows, err := db.Query(
+    `SELECT r.room_id as id
+	FROM room_memberships r
+	WHERE r.user_id = ? `, u.UserID.String())
+
+    if(err != nil) {return nil, err}
+    defer rows.Close()
+
+    var rooms []o.InitialSyncRoomData
+
+    for rows.Next() {
+        var roomId string
+        err := rows.Scan(&roomId)
+        if(err != nil) {return nil, err}
+        room := o.InitialSyncRoomData{Membership: "joined", RoomID: roomId, State: []o.Event{}}
+        rooms = append(rooms, room)
+    }
+
+    return rooms, nil
+}
+
 
 func CreateUser(db DBI, user_id m.UserID) error {
     result, err := db.Exec("INSERT OR FAIL INTO users (user_id, password, salt, creation_ts) VALUES (?, '', '', ?)", user_id.String(), time.Now().Unix())
