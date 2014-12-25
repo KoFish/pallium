@@ -24,6 +24,8 @@ import (
     "github.com/gorilla/mux"
     "net/http"
     "strconv"
+    "time"
+    "math/rand"
 )
 
 var (
@@ -85,7 +87,18 @@ func getInitialSync(db *sql.DB, user *s.User, w http.ResponseWriter, r *http.Req
     return sync, nil
 }
 
+func getEvents(db *sql.DB, user *s.User, w http.ResponseWriter, r *http.Request) (interface {}, error) {
+
+    fromToken := r.URL.Query().Get("from")
+    events := o.PaginationChunk{Start: fromToken, End: fmt.Sprintf("%d", rand.Intn(100000)), Chunk: []o.Event{o.Event{}}}
+    time.Sleep(5000 * time.Millisecond)
+
+    return events, nil
+}
+
 func setupEvents(root *mux.Router) {
     root.HandleFunc("/initialSync", u.AllowMatrixOrg).Methods("OPTIONS")
     root.HandleFunc("/initialSync", u.JSONWithAuthReply(getInitialSync)).Methods("GET")
+    root.HandleFunc("/events", u.AllowMatrixOrg).Methods("OPTIONS")
+    root.HandleFunc("/events", u.JSONWithAuthReply(getEvents)).Methods("GET")
 }
