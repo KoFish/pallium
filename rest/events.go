@@ -68,7 +68,7 @@ func getInitialRoomStates(db s.DBI, user *s.User, limit uint64) ([]o.InitialSync
 
 func getInitialEvents(db s.DBI, user *s.User) ([]InitialSyncEvent, error) {
     content := o.Content{}
-    content["user_id"] = "@skaverat:m.skaverat.net"
+    content["user_id"] = user.UserID.String()
     ev := InitialSyncEvent{"m.presence", content}
     return []InitialSyncEvent{ev}, nil
 }
