@@ -1,13 +1,13 @@
 package rest
 
 import (
+	"crypto/md5"
+	"database/sql"
+	"fmt"
 	u "github.com/KoFish/pallium/rest/utils"
 	s "github.com/KoFish/pallium/storage"
 	"github.com/gorilla/mux"
 	"net/http"
-	"database/sql"
-	"fmt"
-	"crypto/md5"
 )
 
 func setupProfile(root *mux.Router) {
@@ -23,11 +23,11 @@ func getDisplayName(db *sql.DB, user *s.User, w http.ResponseWriter, r *http.Req
 		}
 	)
 
-	profile,err := user.GetProfile(db)
-	if(err != nil) {
+	profile, err := user.GetProfile(db)
+	if err != nil {
 		fmt.Println(err)
 		resp.DisplayName = ""
-	}else{
+	} else {
 		resp.DisplayName = profile.DisplayName
 	}
 

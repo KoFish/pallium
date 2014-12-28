@@ -17,56 +17,56 @@
 package storage
 
 import (
-    "database/sql"
-    "fmt"
-    _ "github.com/mxk/go-sqlite/sqlite3"
+	"database/sql"
+	"fmt"
+	_ "github.com/mxk/go-sqlite/sqlite3"
 )
 
 var (
-    gDB *sql.DB
+	gDB *sql.DB
 )
 
 // The DBI is something that can do something on a database, normally either a
 // `*sql.DB` or a `*sql.Tx`.
 type DBI interface {
-    Exec(string, ...interface{}) (sql.Result, error)
-    Query(string, ...interface{}) (*sql.Rows, error)
-    QueryRow(string, ...interface{}) *sql.Row
+	Exec(string, ...interface{}) (sql.Result, error)
+	Query(string, ...interface{}) (*sql.Rows, error)
+	QueryRow(string, ...interface{}) *sql.Row
 }
 
 func GetDatabase() *sql.DB {
-    if gDB == nil {
-        if db, err := sql.Open("sqlite3", "test.db"); err != nil {
-            panic("matrix: could not open database: " + err.Error())
-        } else {
-            gDB = db
-        }
-    }
-    return gDB
+	if gDB == nil {
+		if db, err := sql.Open("sqlite3", "test.db"); err != nil {
+			panic("matrix: could not open database: " + err.Error())
+		} else {
+			gDB = db
+		}
+	}
+	return gDB
 }
 
 func Setup() error {
-    var db_tables map[string]string = map[string]string{
-        "user_table":         user_table,
-        "rooms_table":        rooms_table,
-        "events_table":       events_table,
-        "profile_table":      profile_table,
-        "presence_table":     presence_table,
-        "access_token_table": access_token_table,
-    }
+	var db_tables map[string]string = map[string]string{
+		"user_table":         user_table,
+		"rooms_table":        rooms_table,
+		"events_table":       events_table,
+		"profile_table":      profile_table,
+		"presence_table":     presence_table,
+		"access_token_table": access_token_table,
+	}
 
-    db := GetDatabase()
-    tx, err := db.Begin()
-    if err != nil {
-        panic("Could not open database transaction")
-    }
-    for name, table := range db_tables {
-        fmt.Printf("matrix: setting up DB table %v\n", name)
-        if _, err := tx.Exec(table); err != nil {
-            tx.Rollback()
-            panic("Could not setup " + name + ": " + err.Error())
-        }
-    }
-    tx.Commit()
-    return nil
+	db := GetDatabase()
+	tx, err := db.Begin()
+	if err != nil {
+		panic("Could not open database transaction")
+	}
+	for name, table := range db_tables {
+		fmt.Printf("matrix: setting up DB table %v\n", name)
+		if _, err := tx.Exec(table); err != nil {
+			tx.Rollback()
+			panic("Could not setup " + name + ": " + err.Error())
+		}
+	}
+	tx.Commit()
+	return nil
 }

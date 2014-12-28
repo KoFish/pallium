@@ -16,26 +16,28 @@
 package config
 
 import (
-    "os"
-    "encoding/json"
+	"encoding/json"
+	"os"
 )
 
 var Config = load()
 
 type Configuration struct {
-    Port                     int    `json:"port"`
-    Hostname                 string `json:"hostname"`
-    DefaultPowerLevel        int64  `json:"DefaultPowerLevel"`
-    DefaultCreatorPowerLevel int64  `json:"DefaultCreatorPowerLevel"`
+	Port                     int    `json:"port"`
+	Hostname                 string `json:"hostname"`
+	DefaultPowerLevel        int64  `json:"DefaultPowerLevel"`
+	DefaultCreatorPowerLevel int64  `json:"DefaultCreatorPowerLevel"`
 }
 
 func load() Configuration {
-    config := Configuration{}
+	config := Configuration{}
 
-    file,_ := os.Open("config.json")
-    decoder := json.NewDecoder(file)
-    err := decoder.Decode(&config)
-    if(err != nil) {panic("could not decode or find config. Copy config.json.dist to config.json")}
+	file, _ := os.Open("config.json")
+	decoder := json.NewDecoder(file)
+	err := decoder.Decode(&config)
+	if err != nil {
+		panic("could not decode or find config. Copy config.json.dist to config.json")
+	}
 
-    return config
+	return config
 }

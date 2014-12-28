@@ -15,100 +15,100 @@
 package matrix
 
 import (
-    "bytes"
-    "crypto/rand"
-    "encoding/base64"
-    c "github.com/KoFish/pallium/config"
-    "strings"
-    "time"
+	"bytes"
+	"crypto/rand"
+	"encoding/base64"
+	c "github.com/KoFish/pallium/config"
+	"strings"
+	"time"
 )
 
 type (
-    UserID    struct{ DomainSpecificString }
-    RoomID    struct{ DomainSpecificString }
-    RoomAlias struct{ DomainSpecificString }
-    EventID   struct{ DomainSpecificString }
+	UserID    struct{ DomainSpecificString }
+	RoomID    struct{ DomainSpecificString }
+	RoomAlias struct{ DomainSpecificString }
+	EventID   struct{ DomainSpecificString }
 )
 
 var (
-    // Default invalid Room ID
-    NoRoomID RoomID = RoomID{}
-    // Default invalid User ID
-    NoUserID UserID = UserID{}
-    // Default invalid Event ID
-    NoEventID EventID = EventID{}
-    // Default invalid Room Alias
-    NoRoomAlias RoomAlias = RoomAlias{}
+	// Default invalid Room ID
+	NoRoomID RoomID = RoomID{}
+	// Default invalid User ID
+	NoUserID UserID = UserID{}
+	// Default invalid Event ID
+	NoEventID EventID = EventID{}
+	// Default invalid Room Alias
+	NoRoomAlias RoomAlias = RoomAlias{}
 )
 
 func NewUserID(localpart, domain string) (UserID, error) {
-    dss, err := makeDSS("@", localpart, domain)
-    return UserID{dss}, err
+	dss, err := makeDSS("@", localpart, domain)
+	return UserID{dss}, err
 }
 
 func ParseUserID(s string) (UserID, error) {
-    dss, err := parseDSS("@", s)
-    return UserID{dss}, err
+	dss, err := parseDSS("@", s)
+	return UserID{dss}, err
 }
 
 func NewRoomID(localpart, domain string) (RoomID, error) {
-    dss, err := makeDSS("!", localpart, domain)
-    return RoomID{dss}, err
+	dss, err := makeDSS("!", localpart, domain)
+	return RoomID{dss}, err
 }
 
 func GenerateRoomID() (RoomID, error) {
-    rstr := make([]byte, 10)
-    if _, err := rand.Read(rstr); err != nil {
-        return NoRoomID, err
-    }
-    localpart := strings.Replace(base64.URLEncoding.EncodeToString(rstr), "=", "", -1)
-    return NewRoomID(localpart, c.Config.Hostname)
+	rstr := make([]byte, 10)
+	if _, err := rand.Read(rstr); err != nil {
+		return NoRoomID, err
+	}
+	localpart := strings.Replace(base64.URLEncoding.EncodeToString(rstr), "=", "", -1)
+	return NewRoomID(localpart, c.Config.Hostname)
 }
 
 func ParseRoomID(s string) (RoomID, error) {
-    dss, err := parseDSS("!", s)
-    return RoomID{dss}, err
+	dss, err := parseDSS("!", s)
+	return RoomID{dss}, err
 }
 
 func NewRoomAlias(localpart, domain string) (RoomAlias, error) {
-    dss, err := makeDSS("#", localpart, domain)
-    return RoomAlias{dss}, err
+	dss, err := makeDSS("#", localpart, domain)
+	return RoomAlias{dss}, err
 }
 
 func ParseRoomAlias(s string) (RoomAlias, error) {
-    dss, err := parseDSS("#", s)
-    return RoomAlias{dss}, err
+	dss, err := parseDSS("#", s)
+	return RoomAlias{dss}, err
 }
 
 func NewEventID(localpart, domain string) (EventID, error) {
-    dss, err := makeDSS("$", localpart, domain)
-    return EventID{dss}, err
+	dss, err := makeDSS("$", localpart, domain)
+	return EventID{dss}, err
 }
 
 func ParseEventID(s string) (EventID, error) {
-    dss, err := parseDSS("$", s)
-    return EventID{dss}, err
+	dss, err := parseDSS("$", s)
+	return EventID{dss}, err
 }
 
 func toBytes(nr int64) []byte {
-    var b [8]byte
-    for i := 0; i < 8; i++ {
-        b[i] = byte((nr >> uint(8*(7-i))) & 0xff)
-    }
-    return b[:]
+	var b [8]byte
+	for i := 0; i < 8; i++ {
+		b[i] = byte((nr >> uint(8*(7-i))) & 0xff)
+	}
+	return b[:]
 }
 
 func GenerateEventID() (ev EventID, err error) {
-    idb := bytes.TrimLeft(toBytes(event_id_counter), "\x00")
-    event_id_counter += 1
-    nowb := bytes.TrimLeft(toBytes(time.Now().Unix()), "\x00")
-    rstr := make([]byte, 5)
-    if _, err := rand.Read(rstr); err != nil {
-        return NoEventID, err
-    }
-    evid := bytes.Join([][]byte{rstr, nowb, idb}, []byte{})
-    encstr := strings.Replace(base64.URLEncoding.EncodeToString(evid), "=", "", -1)
-    encstr = strings.Replace(encstr, "$", ".", -1)
-    encstr = strings.Replace(encstr, ":", ".", -1)
-    return NewEventID(encstr, c.Config.Hostname)
+	idb := bytes.TrimLeft(toBytes(event_id_counter), "\x00")
+	event_id_counter += 1
+	nowb := bytes.TrimLeft(toBytes(time.Now().Unix()), "\x00")
+	rstr := make([]byte, 5)
+	if _, err := rand.Read(rstr); err != nil {
+		return NoEventID, err
+	}
+	evid := bytes.Join([][]byte{rstr, nowb, idb}, []byte{})
+	encstr := strings.Replace(base64.URLEncoding.EncodeToString(evid), "=", "", -1)
+	encstr = strings.Replace(encstr, "$", ".", -1)
+	encstr = strings.Replace(encstr, ":", ".", -1)
+	return NewEventID(encstr, c.Config.Hostname)
 }

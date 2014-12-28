@@ -15,7 +15,7 @@
 package storage
 
 import (
-    "time"
+	"time"
 )
 
 const presence_table = `
@@ -31,32 +31,32 @@ presence (
 type PresenceState int
 
 const (
-    P_FREEFORCHAT PresenceState = 20
-    P_ONLINE      PresenceState = 10
-    P_UNAVAILABLE PresenceState = 5
-    P_HIDDEN      PresenceState = 1
-    P_OFFLINE     PresenceState = 0
+	P_FREEFORCHAT PresenceState = 20
+	P_ONLINE      PresenceState = 10
+	P_UNAVAILABLE PresenceState = 5
+	P_HIDDEN      PresenceState = 1
+	P_OFFLINE     PresenceState = 0
 )
 
 var (
-    PresenceStates map[string]PresenceState = map[string]PresenceState{
-        "free for chat": P_FREEFORCHAT,
-        "online": P_ONLINE,
-        "unavailable": P_UNAVAILABLE,
-        "hidden": P_HIDDEN,
-        "offline": P_OFFLINE,
-    }
+	PresenceStates map[string]PresenceState = map[string]PresenceState{
+		"free for chat": P_FREEFORCHAT,
+		"online":        P_ONLINE,
+		"unavailable":   P_UNAVAILABLE,
+		"hidden":        P_HIDDEN,
+		"offline":       P_OFFLINE,
+	}
 )
 
 func (u *User) UpdatePresence(db DBI, newpresence PresenceState, message string) error {
-    now := time.Now().UnixNano() / int64(time.Millisecond)
-    result, err := db.Exec("INSERT OR FAIL INTO presence VALUES(?,?,?,?)", u.ID, int(newpresence), message, now)
-    if err != nil {
-        return err
-    }
-    count, err := result.RowsAffected()
-    if count < 1 {
-        panic("Inserting new presence did not create new rows")
-    }
-    return err
+	now := time.Now().UnixNano() / int64(time.Millisecond)
+	result, err := db.Exec("INSERT OR FAIL INTO presence VALUES(?,?,?,?)", u.ID, int(newpresence), message, now)
+	if err != nil {
+		return err
+	}
+	count, err := result.RowsAffected()
+	if count < 1 {
+		panic("Inserting new presence did not create new rows")
+	}
+	return err
 }

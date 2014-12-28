@@ -15,22 +15,22 @@
 package matrix
 
 type (
-    RoomMembership string
-    // Enumerates the different kinds of join rules that a room  can have.
-    RoomJoinRule string
+	RoomMembership string
+	// Enumerates the different kinds of join rules that a room  can have.
+	RoomJoinRule string
 )
 
 const (
-    MEMBERSHIP_NONE   RoomMembership = "none"
-    MEMBERSHIP_INVITE RoomMembership = "invite"
-    MEMBERSHIP_JOIN   RoomMembership = "join"
-    MEMBERSHIP_LEAVE  RoomMembership = "leave"
-    MEMBERSHIP_BAN    RoomMembership = "ban"
+	MEMBERSHIP_NONE   RoomMembership = "none"
+	MEMBERSHIP_INVITE RoomMembership = "invite"
+	MEMBERSHIP_JOIN   RoomMembership = "join"
+	MEMBERSHIP_LEAVE  RoomMembership = "leave"
+	MEMBERSHIP_BAN    RoomMembership = "ban"
 )
 
 const (
-    JOIN_PUBLIC  RoomJoinRule = "public"
-    JOIN_KNOCK   RoomJoinRule = "knock"
-    JOIN_INVITE  RoomJoinRule = "invite"
-    JOIN_PRIVATE RoomJoinRule = "private"
+	JOIN_PUBLIC  RoomJoinRule = "public"
+	JOIN_KNOCK   RoomJoinRule = "knock"
+	JOIN_INVITE  RoomJoinRule = "invite"
+	JOIN_PRIVATE RoomJoinRule = "private"
 )

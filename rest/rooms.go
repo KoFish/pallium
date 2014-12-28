@@ -30,11 +30,10 @@ import (
 type room struct {
 	Aliases       []string `json:"aliases"`
 	Name          string   `json:"name"`
-	JoinedMembers int	   `json:"num_joined_members"`
+	JoinedMembers int      `json:"num_joined_members"`
 	RoomId        string   `json:"room_id"`
-	Topic		  string   `json:"topic"`
+	Topic         string   `json:"topic"`
 }
-
 
 // func roomAliasLookup(db *sql.DB, user *s.User, w http.ResponseWriter, r *http.Request) (interface{}, error) {
 //     var (
@@ -274,14 +273,14 @@ func listPublicRooms(db *sql.DB, user *s.User, w http.ResponseWriter, r *http.Re
 	var (
 		res struct {
 			Chunk []s.Room `json:"chunk"`
-			End   string `json:"end"`
-			Start string `json:"start"`}
+			End   string   `json:"end"`
+			Start string   `json:"start"`
+		}
 	)
 	res.Start = "START"
 	res.End = "END"
 
-
-	tx,_ := db.Begin()
+	tx, _ := db.Begin()
 	rooms := s.GetPublicRooms(tx)
 
 	res.Chunk = rooms
@@ -402,6 +401,6 @@ func setupRooms(root *mux.Router) {
 	// root.HandleFunc("/rooms/{room}/ban", u.JSONWithAuthReply(banRoom)).Methods("POST")
 	// root.HandleFunc("/rooms/{room}/ban/{txnId:[0-9]+}", u.JSONWithAuthReply(banRoom)).Methods("PUT")
 	// root.HandleFunc("/rooms/{room}/state/{state_type}/{state_key}", u.JSONWithAuthReply(setRoomState)).Methods("POST")
-//	root.HandleFunc("/rooms/{room}/state/{state_type}/{state_key}", u.JSONWithAuthReply(setRoomState)).Methods("PUT")
+	//	root.HandleFunc("/rooms/{room}/state/{state_type}/{state_key}", u.JSONWithAuthReply(setRoomState)).Methods("PUT")
 	// root.HandleFunc("/rooms/{room}/state/{state_type}/{state_key}/{txnId:[0-9]+}", u.JSONWithAuthReply(inviteRoom)).Methods("PUT")
 }

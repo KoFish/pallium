@@ -15,10 +15,10 @@
 package rest
 
 import (
-    // "github.com/KoFish/pallium/utils"
-    "github.com/gorilla/mux"
+	// "github.com/KoFish/pallium/utils"
+	"github.com/gorilla/mux"
 )
 
 func setupFederation(sub *mux.Router) {
-    // TODO(kofish): Federation needs to be implemented.
+	// TODO(kofish): Federation needs to be implemented.
 }

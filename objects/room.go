@@ -21,7 +21,6 @@ type Event struct {
 	UserID    string  `json:"user_id"`
 }
 
-
 type (
 	Content map[string]interface{}
 )

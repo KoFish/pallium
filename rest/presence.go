@@ -10,38 +10,35 @@
 //    See the License for the specific language governing permissions and
 //    limitations under the License.
 
-
 package rest
 
 import (
+	"database/sql"
+	"encoding/json"
+	"fmt"
 	u "github.com/KoFish/pallium/rest/utils"
 	s "github.com/KoFish/pallium/storage"
 	"github.com/gorilla/mux"
 	"net/http"
-	"database/sql"
-	"encoding/json"
-	"fmt"
 )
 
 type presence struct {
 	Presence string `json:"presence"`
 }
 
-
 func setupPresence(root *mux.Router) {
 	root.HandleFunc("/presence/{user}/status", u.OptionsReply()).Methods("OPTIONS")
 	root.HandleFunc("/presence/{user}/status", u.JSONWithAuthReply(updatePresence)).Methods("PUT")
 }
 
-
-func updatePresence(db *sql.DB, user *s.User, w http.ResponseWriter, r *http.Request) (interface {}, error) {
+func updatePresence(db *sql.DB, user *s.User, w http.ResponseWriter, r *http.Request) (interface{}, error) {
 	presenceState := presence{}
 	decoder := json.NewDecoder(r.Body)
 	decoder.Decode(&presenceState)
 
 	err := user.UpdatePresence(db, s.PresenceStates[presenceState.Presence], "foobar")
 
-	if(err != nil) {
+	if err != nil {
 		fmt.Println(err)
 	}
 
