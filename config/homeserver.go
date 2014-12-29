@@ -18,7 +18,7 @@ import (
 	"os"
 )
 
-var Config = load()
+var Config Configuration
 
 type Configuration struct {
 	Port                     int    `json:"port"`
@@ -27,15 +27,19 @@ type Configuration struct {
 	DefaultCreatorPowerLevel int64  `json:"DefaultCreatorPowerLevel"`
 }
 
-func load() Configuration {
+func load(configfile string) Configuration {
 	config := Configuration{}
 
-	file, _ := os.Open("config.json")
+	file, _ := os.Open(configfile)
 	decoder := json.NewDecoder(file)
 	err := decoder.Decode(&config)
 	if err != nil {
-		panic("could not decode or find config. Copy config.json.dist to config.json")
+		panic("could not decode or find config. Copy " + configfile + ".dist to " + configfile)
 	}
 
 	return config
+}
+
+func init() {
+	Config = load("config.json")
 }
