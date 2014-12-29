@@ -23,6 +23,7 @@ import (
 	s "github.com/KoFish/pallium/storage"
 	"github.com/gorilla/mux"
 	"io/ioutil"
+	"log"
 	"net/http"
 )
 
@@ -64,7 +65,7 @@ func (regInfo *PasswordLoginRequest) submitRegistrationRequest(db *sql.DB, w htt
 
 	txn, err := db.Begin()
 	if err != nil {
-		fmt.Errorf("Could not create new db transaction: %v", err)
+		log.Printf("matrix: could not create new db transaction: %v", err)
 		return nil, u.NewError(m.M_FORBIDDEN, "Could not create a new transaction")
 	}
 
@@ -73,7 +74,7 @@ func (regInfo *PasswordLoginRequest) submitRegistrationRequest(db *sql.DB, w htt
 		return nil, u.NewError(m.M_FORBIDDEN, "Invalid User ID: "+err.Error())
 	}
 
-	fmt.Printf("Request to register user %s\n", user_id)
+	log.Printf("Request to register user %s\n", user_id)
 	if !user_id.IsMine() {
 		return nil, u.NewError(m.M_FORBIDDEN, "Can not register user on other homeserver "+user_id.Domain())
 	}
@@ -114,7 +115,7 @@ func (loginInfo *PasswordLoginRequest) submitLoginPassword(db *sql.DB, w http.Re
 		return nil, u.NewError(m.M_FORBIDDEN, "Can not register user namespaced to other host.")
 	}
 
-	fmt.Printf("Request to login user %s\n", user_id)
+	log.Printf("Request to login user %s\n", user_id)
 	user, err := s.GetUser(db, user_id)
 	if err != nil {
 		return nil, u.NewError(m.M_NOT_FOUND, "Could not get such a user: "+err.Error())

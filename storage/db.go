@@ -16,8 +16,8 @@ package storage
 
 import (
 	"database/sql"
-	"fmt"
 	_ "github.com/mxk/go-sqlite/sqlite3"
+	"log"
 )
 
 var (
@@ -59,7 +59,7 @@ func Setup() error {
 		panic("Could not open database transaction")
 	}
 	for name, table := range db_tables {
-		fmt.Printf("matrix: setting up DB table %v\n", name)
+		log.Printf("matrix: setting up DB table %v\n", name)
 		if _, err := tx.Exec(table); err != nil {
 			tx.Rollback()
 			panic("Could not setup " + name + ": " + err.Error())

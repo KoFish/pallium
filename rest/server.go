@@ -19,6 +19,7 @@ import (
 	"fmt"
 	c "github.com/KoFish/pallium/config"
 	"github.com/gorilla/mux"
+	"log"
 	"net/http"
 )
 
@@ -42,7 +43,8 @@ func Setup() {
 }
 
 func Start() {
+	log.Printf("matrix: starting service at 0.0.0.0:%v", c.Config.Port)
 	if err := http.ListenAndServe(fmt.Sprintf(":%v", c.Config.Port), nil); err != nil {
-		fmt.Printf("matrix: could not start up server\n >> %v\n", err)
+		log.Printf("matrix: could not start up server \"%v\"", err)
 	}
 }

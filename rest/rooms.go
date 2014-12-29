@@ -15,13 +15,13 @@ package rest
 import (
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	c "github.com/KoFish/pallium/config"
 	m "github.com/KoFish/pallium/matrix"
 	u "github.com/KoFish/pallium/rest/utils"
 	s "github.com/KoFish/pallium/storage"
 	"github.com/gorilla/mux"
 	"io/ioutil"
+	"log"
 	"net/http"
 )
 
@@ -196,7 +196,7 @@ func createRoom(db *sql.DB, user *s.User, w http.ResponseWriter, r *http.Request
 		for _, invitee := range req.Invite {
 			target, err := m.ParseUserID(invitee)
 			if err != nil {
-				fmt.Printf("matrix: skipping invalid user for invitation on room creation: %v", err.Error())
+				log.Printf("matrix: skipping invalid user for invitation on room creation: %v", err.Error())
 			} else {
 				room.UpdateMember(tx, user.UserID, target, m.MEMBERSHIP_INVITE)
 			}

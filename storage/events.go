@@ -18,6 +18,7 @@ import (
 	"fmt"
 	c "github.com/KoFish/pallium/config"
 	m "github.com/KoFish/pallium/matrix"
+	"log"
 	"time"
 )
 
@@ -201,7 +202,7 @@ func CreateEvent(tx *sql.Tx, event_id m.EventID, user_id m.UserID, room_id m.Roo
 	}
 	err = updateroom_idDepth(tx, room_id, event_depth)
 	if err == nil {
-		fmt.Printf("storage: created %v event %v by %v\n", event_type, event_id.String(), user_id.String())
+		log.Printf("storage: created %v event %v by %v\n", event_type, event_id.String(), user_id.String())
 	}
 	return err
 }

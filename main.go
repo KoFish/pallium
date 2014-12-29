@@ -16,16 +16,16 @@
 package main
 
 import (
-	"fmt"
 	"github.com/KoFish/pallium/rest"
 	"github.com/KoFish/pallium/storage"
+	"log"
 )
 
 func main() {
-	fmt.Println("Setting up matrix")
+	log.Println("matrix: setting up matrix")
 	storage.Setup()
 	rest.Setup()
-	fmt.Println("Starting service")
+	log.Println("matrix: starting service")
 	rest.Start()
-	fmt.Println("Shutting down matrix")
+	log.Println("matrix: shutting down matrix")
 }

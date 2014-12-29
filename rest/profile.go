@@ -7,6 +7,7 @@ import (
 	u "github.com/KoFish/pallium/rest/utils"
 	s "github.com/KoFish/pallium/storage"
 	"github.com/gorilla/mux"
+	"log"
 	"net/http"
 )
 
@@ -25,7 +26,7 @@ func getDisplayName(db *sql.DB, user *s.User, w http.ResponseWriter, r *http.Req
 
 	profile, err := user.GetProfile(db)
 	if err != nil {
-		fmt.Println(err)
+		log.Printf("matrix: could not get profile \"%v\"", err)
 		resp.DisplayName = ""
 	} else {
 		resp.DisplayName = profile.DisplayName

@@ -17,13 +17,10 @@ import (
 	"crypto/rand"
 	"crypto/sha512"
 	"encoding/hex"
-	"fmt"
 	m "github.com/KoFish/pallium/matrix"
 	o "github.com/KoFish/pallium/objects"
 	"time"
 )
-
-var _ = fmt.Println
 
 const user_table = `
 CREATE TABLE IF NOT EXISTS

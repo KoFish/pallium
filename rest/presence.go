@@ -15,10 +15,10 @@ package rest
 import (
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	u "github.com/KoFish/pallium/rest/utils"
 	s "github.com/KoFish/pallium/storage"
 	"github.com/gorilla/mux"
+	"log"
 	"net/http"
 )
 
@@ -39,9 +39,9 @@ func updatePresence(db *sql.DB, user *s.User, w http.ResponseWriter, r *http.Req
 	err := user.UpdatePresence(db, s.PresenceStates[presenceState.Presence], "foobar")
 
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 	}
 
-	fmt.Println(presenceState.Presence)
+	log.Println(presenceState.Presence)
 	return nil, nil
 }

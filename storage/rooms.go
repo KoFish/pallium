@@ -17,6 +17,7 @@ import (
 	"fmt"
 	c "github.com/KoFish/pallium/config"
 	m "github.com/KoFish/pallium/matrix"
+	"log"
 )
 
 const rooms_table = `
@@ -149,7 +150,7 @@ func GetPublicRooms(tx *sql.Tx) []Room {
         WHERE is_public = 1 AND r.room_id = rm.room_id`)
 
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		return nil
 	}
 	defer rows.Close()
@@ -163,7 +164,7 @@ func GetPublicRooms(tx *sql.Tx) []Room {
 		)
 		err := rows.Scan(&roomId, &memberCount)
 		if err != nil {
-			fmt.Println(err)
+			log.Println(err)
 			return nil
 		}
 		room := Room{RoomId: roomId, JoinedMembers: memberCount}

@@ -20,14 +20,11 @@ import (
 	u "github.com/KoFish/pallium/rest/utils"
 	s "github.com/KoFish/pallium/storage"
 	"github.com/gorilla/mux"
+	"log"
 	"math/rand"
 	"net/http"
 	"strconv"
 	"time"
-)
-
-var (
-	_ = fmt.Println
 )
 
 type StateEvent struct {
@@ -63,7 +60,7 @@ func getInitialRoomStates(db s.DBI, user *s.User, limit uint64) ([]o.InitialSync
 	value, err := user.GetRoomMemberships(db)
 
 	if err != nil {
-		fmt.Println(err)
+		log.Println("matrix: could not get room memberships \"%v\"", err)
 	}
 	return value, nil
 }
