@@ -35,6 +35,9 @@ the URL of your pallium server (e.g. http://localhost:8008) as the "Home Server"
 on the login and registration pages rather than http://matrix.org.  You do not need to
 enter the captcha, as pallium does not support captcha-based registration yet.
 
+*Currently pallium does not support the full Matrix API set, so the webclient may well not
+work correctly*
+
 Alternatively, to run your own webclient:
 
     git clone http://github.com/matrix-org/matrix-angular-sdk
