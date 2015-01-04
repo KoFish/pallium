@@ -40,22 +40,26 @@ func JoinRoom(user *s.User, req io.Reader, vars Vars, query Query) (interface{},
 	}
 	if room_alias, err := m.ParseRoomAlias(q_room); err != nil {
 		if room_id, err = m.ParseRoomID(q_room); err != nil {
+			log.Println(err.Error())
 			return nil, EBadJSON("Could not parse room identifier")
 		}
 	} else {
 		db := s.GetDatabase()
 		if room_id, _, err = s.LookupRoomAlias(db, room_alias); err != nil {
+			log.Println(err.Error())
 			return nil, ENotFound("Could not resolve room alias")
 		}
 	}
 	db := s.GetDatabase()
 	tx, err := db.Begin()
 	if err != nil {
+		log.Println(err.Error())
 		panic("matrix: could not start database transaction")
 	}
 	room := s.Room{ID: room_id}
 	if err := room.CheckedUpdateMember(tx, user.UserID, user.UserID, m.MEMBERSHIP_JOIN); err != nil {
 		tx.Rollback()
+		log.Println(err.Error())
 		return nil, EForbidden("Could not join room")
 	}
 	tx.Commit()
@@ -101,6 +105,7 @@ func CreateRoom(user *s.User, req io.Reader, vars Vars, query Query) (interface{
 	if request.RoomAliasName != "" {
 		alias, err := m.ParseRoomAlias(request.RoomAliasName)
 		if err != nil {
+			log.Println(err.Error())
 			return nil, EBadJSON("Incorrectly formatted room alias")
 		} else {
 			room_alias = &alias
@@ -111,6 +116,7 @@ func CreateRoom(user *s.User, req io.Reader, vars Vars, query Query) (interface{
 		for _, invitee := range request.Invite {
 			target, err := m.ParseUserID(invitee)
 			if err != nil {
+				log.Println(err.Error())
 				return nil, EBadJSON("Incorrectly formatted User ID to invite")
 			} else {
 				invitees = append(invitees, target)
@@ -124,15 +130,18 @@ func CreateRoom(user *s.User, req io.Reader, vars Vars, query Query) (interface{
 	} else {
 		if room, err := s.CreateRoom(tx, user.UserID, is_public); err != nil {
 			tx.Rollback()
+			log.Println(err.Error())
 			log.Fatal("matrix: could not create room")
 		} else {
 			if err = room.UpdateMember(tx, user.UserID, user.UserID, m.MEMBERSHIP_JOIN); err != nil {
 				tx.Rollback()
+				log.Println(err.Error())
 				return nil, EForbidden("Could not join room creator to the room")
 			}
 			err = room.UpdateJoinRule(tx, user.UserID, join_rule)
 			if err != nil {
 				tx.Rollback()
+				log.Println(err.Error())
 				return nil, EForbidden("Could not set new rooms join rule")
 			}
 			default_power_level := c.Config.DefaultPowerLevel
@@ -146,24 +155,29 @@ func CreateRoom(user *s.User, req io.Reader, vars Vars, query Query) (interface{
 			}
 			if err = room.UpdatePowerLevels(tx, user.UserID, creator_power_level, &default_power_level); err != nil {
 				tx.Rollback()
+				log.Println(err.Error())
 				return nil, EForbidden("Could not set power levels for creator")
 			}
 			if err = room.UpdateAddStateLevel(tx, user.UserID, c.Config.DefaultPowerLevel); err != nil {
 				tx.Rollback()
+				log.Println(err.Error())
 				return nil, EForbidden("Could not set add state level")
 			}
 			if err = room.UpdateSendEventLevel(tx, user.UserID, c.Config.DefaultPowerLevel); err != nil {
 				tx.Rollback()
+				log.Println(err.Error())
 				return nil, EForbidden("Could not set send event level")
 			}
 			if err = room.UpdateOpsLevel(tx, user.UserID, default_ops_levels); err != nil {
 				tx.Rollback()
+				log.Println(err.Error())
 				return nil, EForbidden("Could not set ops level")
 			}
 			if room_alias != nil {
 				alias, err := m.NewRoomAlias(room_alias.Localpart(), room_alias.Domain())
 				if err = room.UpdateAliases(tx, user.UserID, []m.RoomAlias{alias}); err != nil {
 					tx.Rollback()
+					log.Println(err.Error())
 					return nil, EForbidden("Could not set room alias")
 				}
 				response.RoomAlias = alias.String()
@@ -171,18 +185,21 @@ func CreateRoom(user *s.User, req io.Reader, vars Vars, query Query) (interface{
 			if request.Topic != "" {
 				if err = room.UpdateTopic(tx, user.UserID, request.Topic); err != nil {
 					tx.Rollback()
+					log.Println(err.Error())
 					return nil, EForbidden("Could not set room topic")
 				}
 			}
 			if request.Name != "" {
 				if err = room.UpdateName(tx, user.UserID, request.Name); err != nil {
 					tx.Rollback()
+					log.Println(err.Error())
 					return nil, EForbidden("Could not set room name")
 				}
 			}
 			for _, invitee := range invitees {
 				if room.InviteMember(tx, user.UserID, invitee); err != nil {
 					tx.Rollback()
+					log.Println(err.Error())
 					return nil, EForbidden("Could not invite member")
 				}
 			}

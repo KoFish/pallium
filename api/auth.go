@@ -17,6 +17,7 @@ import (
 	m "github.com/KoFish/pallium/matrix"
 	s "github.com/KoFish/pallium/storage"
 	"io"
+	"log"
 )
 
 type loginFlow struct {
@@ -108,27 +109,34 @@ func registerUserByPassword(user, password string) (interface{}, error) {
 	}
 	db := s.GetDatabase()
 	if tx, err := db.Begin(); err != nil {
+		log.Println("matrix-database:", err.Error())
 		panic("matrix: could not begin database transaction")
 	} else {
 		user_id, err := m.ParseUserID(user)
 		response.UserID = user_id.String()
 		if err != nil || !user_id.IsMine() {
 			tx.Rollback()
+			if err != nil {
+				log.Println(err.Error())
+			}
 			return nil, EBadJSON("Invalid User ID")
 		}
 		user, err := s.CreateUser(tx, user_id)
 		if err != nil {
 			tx.Rollback()
+			log.Println(err.Error())
 			return nil, EUserInUse("Username already taken")
 		}
 		if err = user.SetPassword(tx, password); err != nil {
 			tx.Rollback()
+			log.Println(err.Error())
 			return nil, EForbidden("Could not set password")
 		}
 		token, err := user.GetAccessToken(tx)
 		response.Token = string(token.Token)
 		if err != nil {
 			tx.Rollback()
+			log.Println(err.Error())
 			return nil, EForbidden("Could not fetch access token for user")
 		}
 		return response, tx.Commit()
@@ -144,15 +152,20 @@ func loginUserByPassword(user, password string) (interface{}, error) {
 	user_id, err := m.ParseUserID(user)
 	response.UserID = user_id.String()
 	if err != nil || !user_id.IsMine() {
+		if err != nil {
+			log.Println(err.Error())
+		}
 		return nil, EBadJSON("Invalid User ID")
 	}
 	if user, err := s.GetUser(db, user_id); err != nil {
+		log.Println(err.Error())
 		return nil, EForbidden("Invalid user and password combination")
 	} else {
 		if user.Password.Equal(password) {
 			token, err := user.GetAccessToken(db)
 			response.Token = string(token.Token)
 			if err != nil {
+				log.Println(err.Error())
 				return nil, ENotFound("Could not fetch access token")
 			}
 			token.UpdateAccessToken(db)

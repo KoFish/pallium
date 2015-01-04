@@ -19,6 +19,7 @@ import (
 	m "github.com/KoFish/pallium/matrix"
 	s "github.com/KoFish/pallium/storage"
 	"io"
+	"log"
 )
 
 func GetDisplayName(req_user *s.User, request io.Reader, vars map[string]string) (interface{}, error) {
@@ -28,15 +29,18 @@ func GetDisplayName(req_user *s.User, request io.Reader, vars map[string]string)
 	if requser, ok := vars["user"]; ok {
 		userid, err := m.ParseUserID(requser)
 		if err != nil {
+			log.Println(err.Error())
 			return nil, ENotFound("Invalid User ID in request")
 		}
 		db := s.GetDatabase()
 		user, err := s.GetUser(db, userid)
 		if err != nil {
+			log.Println(err.Error())
 			return nil, ENotFound("Unknown user")
 		}
 		profile, err := user.GetProfile(db)
 		if err != nil {
+			log.Println(err.Error())
 			return nil, ENotFound(err.Error())
 		}
 		response.DisplayName = profile.DisplayName
@@ -55,6 +59,7 @@ func UpdateDisplayName(user *s.User, request io.Reader, vars map[string]string) 
 	} else {
 		ruserid, err := m.ParseUserID(requser)
 		if err != nil {
+			log.Println(err.Error())
 			return nil, ENotFound("Invalid User ID")
 		}
 		if !ruserid.Compare(user.UserID.DomainSpecificString) {
@@ -66,9 +71,11 @@ func UpdateDisplayName(user *s.User, request io.Reader, vars map[string]string) 
 	}
 	db := s.GetDatabase()
 	if profile, err := user.GetProfile(db); err != nil {
+		log.Println(err.Error())
 		return nil, ENotFound("Could not get user profile")
 	} else {
 		if err := profile.UpdateDisplayName(db, response.DisplayName); err != nil {
+			log.Println(err.Error())
 			return nil, err
 		}
 	}
@@ -82,11 +89,13 @@ func GetAvatarURL(req_user *s.User, request io.Reader, vars map[string]string) (
 	if requser, ok := vars["user"]; ok {
 		userid, err := m.ParseUserID(requser)
 		if err != nil {
+			log.Println(err.Error())
 			return nil, ENotFound("Invalid User ID in request")
 		}
 		db := s.GetDatabase()
 		user, err := s.GetUser(db, userid)
 		if err != nil {
+			log.Println(err.Error())
 			return nil, ENotFound("Unknown user")
 		}
 		profile, err := user.GetProfile(db)
@@ -113,6 +122,7 @@ func UpdateAvatarURL(user *s.User, request io.Reader, vars map[string]string) (i
 	} else {
 		ruserid, err := m.ParseUserID(requser)
 		if err != nil {
+			log.Println(err.Error())
 			return nil, ENotFound("Invalid UserID")
 		}
 		if !ruserid.Compare(user.UserID.DomainSpecificString) {
@@ -120,13 +130,16 @@ func UpdateAvatarURL(user *s.User, request io.Reader, vars map[string]string) (i
 		}
 	}
 	if err := json.NewDecoder(request).Decode(&response); err != nil {
+		log.Println(err.Error())
 		return nil, ENotJSON(err.Error())
 	}
 	db := s.GetDatabase()
 	if profile, err := user.GetProfile(db); err != nil {
+		log.Println(err.Error())
 		return nil, ENotFound("Could not get user profile")
 	} else {
 		if err := profile.UpdateAvatarURL(db, response.AvatarURL); err != nil {
+			log.Println(err.Error())
 			return nil, err
 		}
 	}

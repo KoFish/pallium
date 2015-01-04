@@ -17,6 +17,7 @@ import (
 	m "github.com/KoFish/pallium/matrix"
 	s "github.com/KoFish/pallium/storage"
 	"io"
+	"log"
 )
 
 func GetPresence(cur_user *s.User, request io.Reader, vars map[string]string) (interface{}, error) {
@@ -30,13 +31,16 @@ func GetPresence(cur_user *s.User, request io.Reader, vars map[string]string) (i
 		db := s.GetDatabase()
 		userid, err := m.ParseUserID(requser)
 		if err != nil {
+			log.Println(err.Error())
 			return nil, ENotFound("Incorrect User ID")
 		}
 
 		if user, err := s.GetUser(db, userid); err != nil {
+			log.Println(err.Error())
 			return nil, ENotFound("Unknown user")
 		} else {
 			if cur_presence, err := user.GetPresence(db); err != nil {
+				log.Println(err.Error())
 				return nil, ENotFound(err.Error())
 			} else {
 				presence.Presence = cur_presence.PresenceString
@@ -57,6 +61,7 @@ func UpdatePresence(user *s.User, request io.Reader, vars map[string]string) (in
 	} else {
 		ruserid, err := m.ParseUserID(requser)
 		if err != nil {
+			log.Println(err.Error())
 			return nil, ENotFound("Invalid UserID")
 		}
 		if !ruserid.Compare(user.UserID.DomainSpecificString) {
@@ -70,6 +75,7 @@ func UpdatePresence(user *s.User, request io.Reader, vars map[string]string) (in
 	if new_state, ok := s.PresenceStates[presence.Presence]; ok {
 		db := s.GetDatabase()
 		if err := user.UpdatePresence(db, new_state, presence.StatusMsg); err != nil {
+			log.Println(err.Error())
 			return nil, err
 		}
 	} else {

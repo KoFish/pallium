@@ -16,6 +16,7 @@ import (
 	o "github.com/KoFish/pallium/objects"
 	s "github.com/KoFish/pallium/storage"
 	"io"
+	"log"
 	"strconv"
 )
 
@@ -29,9 +30,11 @@ func GetInitialSync(user *s.User, request io.Reader, vars Vars, query Query) (in
 	db := s.GetDatabase()
 	// TODO(): Fill sync struct with proper data
 	if sync.Rooms, err = user.GetRoomMemberships(db, limit); err != nil {
+		log.Println(err.Error())
 		return nil, ENotFound("Could not fetch users room memberships")
 	}
 	if sync.Presence, err = user.GetInitialPresence(db); err != nil {
+		log.Println(err.Error())
 		return nil, ENotFound("Could not fetch users initial presence information")
 	}
 	return sync, nil
