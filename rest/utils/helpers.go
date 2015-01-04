@@ -15,6 +15,7 @@
 package utils
 
 import (
+	"github.com/KoFish/pallium/api"
 	"github.com/gorilla/mux"
 	"net/http"
 	"strconv"
@@ -24,31 +25,21 @@ var (
 	prevrequest = map[string]uint64{}
 )
 
-// Check if a certain request is a PUT and has a txnId in their request. If it
-// does and the access token of the requests hasn't already made a request with
-// the same txnId `true` is returned, otherwise `false`.
-func CheckTxnId(r *http.Request) bool {
-	vars := mux.Vars(r)
-	token := r.URL.Query().Get("access_token")
-	if stxnId, ok := vars["txnId"]; ok && r.Method == "PUT" && stxnId != "" {
-		if txnId, err := strconv.ParseUint(stxnId, 10, 64); err == nil {
-			// ip := strings.Split(r.RemoteAddr, ":")[0]
-			// if prevrequest[ip] == txnId {
-			if prevrequest[token] == txnId {
-				return false
+func TxnID(fn JSONReply) JSONReply {
+	return func(r *http.Request) (interface{}, error) {
+		txnid, txnok := mux.Vars(r)["txnId"]
+		token := r.URL.Query().Get("access_token")
+		if r.Method == "PUT" && txnok && txnid != "" {
+			if itxnid, err := strconv.ParseUint(txnid, 10, 64); err == nil {
+				if prevrequest[token] == itxnid {
+					return nil, api.EForbidden("Repeated transaction id")
+				}
+				return fn(r)
 			} else {
-				// prevrequest[ip] = txnId
-				prevrequest[token] = txnId
+				return nil, api.ENotFound("Invalid transaction id, needs to be an integer")
 			}
+		} else {
+			return nil, api.EForbidden("Not allowed without transaction id")
 		}
 	}
-	return true
-}
-
-// By calling this in a request handler the http://matrix.org live test tool
-// is able to make requests.
-func AllowMatrixOrg(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-	w.WriteHeader(200)
 }

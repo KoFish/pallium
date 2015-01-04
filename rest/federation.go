@@ -13,7 +13,6 @@
 package rest
 
 import (
-	// "github.com/KoFish/pallium/utils"
 	"github.com/gorilla/mux"
 )
 

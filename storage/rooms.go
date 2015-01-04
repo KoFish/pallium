@@ -316,6 +316,10 @@ func (r *Room) UpdateMember(tx TX, sender m.UserID, target m.UserID, new_members
 	}
 }
 
+func (r *Room) InviteMember(tx TX, sender m.UserID, target m.UserID) error {
+	return r.UpdateMember(tx, sender, target, m.MEMBERSHIP_INVITE)
+}
+
 func (r *Room) UpdateAliases(tx TX, sender m.UserID, new_aliases []m.RoomAlias) (err error) {
 	var event_id m.EventID
 	aliases := make([]string, len(new_aliases))

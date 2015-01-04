@@ -10,22 +10,24 @@
 //    See the License for the specific language governing permissions and
 //    limitations under the License.
 
-package rest
+// The API package is a the transport independent logic to perform the Matrix
+// API functionalities from the specification. Any exported function in the
+// module is intended to be used by any of the implemented transport protocols
+// and only takes and produces json-serializable objects.
+package api
 
-import (
-	u "github.com/KoFish/pallium/rest/utils"
-	s "github.com/KoFish/pallium/storage"
-	"github.com/gorilla/mux"
-	"net/http"
+/// This file is primarily for documentation of the API package
+
+type (
+	Vars  map[string]string
+	Query map[string][]string
 )
 
-func setupVoip(root *mux.Router) {
-	root.HandleFunc("/voip/turnServer", u.OptionsReply()).Methods("OPTIONS")
-	root.Handle("/voip/turnServer", u.JSONReply(u.RequireAuth(getTurnServer))).Methods("GET")
-}
-
-type turnServer struct{}
-
-func getTurnServer(user *s.User, r *http.Request) (interface{}, error) {
-	return turnServer{}, nil
+func (q Query) GetOne(key, defval string) (string, bool) {
+	vs, ok := q[key]
+	if ok {
+		return vs[0], true
+	} else {
+		return defval, false
+	}
 }

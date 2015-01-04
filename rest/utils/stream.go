@@ -10,6 +10,8 @@
 //    See the License for the specific language governing permissions and
 //    limitations under the License.
 
+// TODO(): This code needs to be moved to some other place in pallium. This is
+//         not rest specific code.
 package utils
 
 import (

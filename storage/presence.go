@@ -28,6 +28,14 @@ presence (
 
 type PresenceState int
 
+type Presence struct {
+	User           *User
+	Presence       PresenceState
+	PresenceString string
+	Status         string
+	MTime          int64
+}
+
 const (
 	P_FREEFORCHAT PresenceState = 20
 	P_ONLINE      PresenceState = 10
@@ -46,6 +54,15 @@ var (
 	}
 )
 
+func (p PresenceState) String() string {
+	for k, v := range PresenceStates {
+		if v == p {
+			return k
+		}
+	}
+	return ""
+}
+
 func (u *User) UpdatePresence(db DBI, newpresence PresenceState, message string) error {
 	now := time.Now().UnixNano() / int64(time.Millisecond)
 	result, err := db.Exec("INSERT OR FAIL INTO presence VALUES(?,?,?,?)", u.ID, int(newpresence), message, now)
@@ -57,4 +74,26 @@ func (u *User) UpdatePresence(db DBI, newpresence PresenceState, message string)
 		panic("Inserting new presence did not create new rows")
 	}
 	return err
+}
+
+func (u *User) GetPresence(db DBI) (*Presence, error) {
+	var (
+		state int64
+		msg   string
+		mtime int64
+	)
+	row := db.QueryRow(`SELECT state, status_msg mtime
+		FROM presence
+		WHERE user_id=?`)
+	if err := row.Scan(&state, &msg, &mtime); err != nil {
+		return nil, err
+	}
+	curstate := PresenceState(state)
+	return &Presence{
+		User:           u,
+		Presence:       curstate,
+		PresenceString: curstate.String(),
+		Status:         msg,
+		MTime:          mtime,
+	}, nil
 }

@@ -13,89 +13,26 @@
 package rest
 
 import (
-	"database/sql"
-	"fmt"
-	m "github.com/KoFish/pallium/matrix"
-	o "github.com/KoFish/pallium/objects"
+	"github.com/KoFish/pallium/api"
 	u "github.com/KoFish/pallium/rest/utils"
 	s "github.com/KoFish/pallium/storage"
 	"github.com/gorilla/mux"
-	"log"
-	"math/rand"
 	"net/http"
-	"strconv"
-	"time"
 )
 
-type StateEvent struct {
-	Event         o.Event
-	StateKey      string    `json:"state_key"`
-	ReqPowerLevel int64     `json:"required_power_level"`
-	PrevContent   o.Content `json:"prev_content"`
+func getEvents(user *s.User, r *http.Request) (interface{}, error) {
+	defer r.Body.Close()
+	return api.GetEvents(user, r.Body, mux.Vars(r), api.Query(r.URL.Query()))
 }
 
-type InitialSyncEvent struct {
-	Type    string    `json:"type"`
-	Content o.Content `json:"content"`
-}
-
-type InitialSync struct {
-	End      string                  `json:"end"`
-	Presence []InitialSyncEvent      `json:"presence,omitempty"`
-	Rooms    []o.InitialSyncRoomData `json:"rooms,omitempty"`
-}
-
-func getLimit(r *http.Request, def uint64) (limit uint64, err error) {
-	slimit := r.URL.Query().Get("limit")
-	if slimit != "" {
-		limit, err = strconv.ParseUint(slimit, 10, 64)
-	} else {
-		limit = def
-	}
-	return
-}
-
-func getInitialRoomStates(db s.DBI, user *s.User, limit uint64) ([]o.InitialSyncRoomData, error) {
-
-	value, err := user.GetRoomMemberships(db)
-
-	if err != nil {
-		log.Println("matrix: could not get room memberships \"%v\"", err)
-	}
-	return value, nil
-}
-
-func getInitialEvents(db s.DBI, user *s.User) ([]InitialSyncEvent, error) {
-	content := o.Content{}
-	content["user_id"] = user.UserID.String()
-	ev := InitialSyncEvent{"m.presence", content}
-	return []InitialSyncEvent{ev}, nil
-}
-
-func getInitialSync(db *sql.DB, user *s.User, w http.ResponseWriter, r *http.Request) (interface{}, error) {
-	limit, err := getLimit(r, 16)
-	if err != nil {
-		return nil, u.NewError(m.M_FORBIDDEN, "Limit is not a number")
-	}
-	var sync InitialSync
-	sync.End = "stuff"
-	sync.Rooms, _ = getInitialRoomStates(db, user, limit)
-	sync.Presence, _ = getInitialEvents(db, user)
-	return sync, nil
-}
-
-func getEvents(db *sql.DB, user *s.User, w http.ResponseWriter, r *http.Request) (interface{}, error) {
-
-	fromToken := r.URL.Query().Get("from")
-	events := o.PaginationChunk{Start: fromToken, End: fmt.Sprintf("%d", rand.Intn(100000)), Chunk: []o.Event{o.Event{}}}
-	time.Sleep(5000 * time.Millisecond)
-
-	return events, nil
+func getInitialSync(user *s.User, r *http.Request) (interface{}, error) {
+	defer r.Body.Close()
+	return api.GetInitialSync(user, r.Body, mux.Vars(r), api.Query(r.URL.Query()))
 }
 
 func setupEvents(root *mux.Router) {
-	root.HandleFunc("/initialSync", u.AllowMatrixOrg).Methods("OPTIONS")
-	root.HandleFunc("/initialSync", u.JSONWithAuthReply(getInitialSync)).Methods("GET")
-	root.HandleFunc("/events", u.AllowMatrixOrg).Methods("OPTIONS")
-	root.HandleFunc("/events", u.JSONWithAuthReply(getEvents)).Methods("GET")
+	root.HandleFunc("/events", u.OptionsReply()).Methods("OPTIONS")
+	root.HandleFunc("/initialSync", u.OptionsReply()).Methods("OPTIONS")
+	root.Handle("/events", u.JSONReply(u.RequireAuth(getEvents))).Methods("GET")
+	root.Handle("/initialSync", u.JSONReply(u.RequireAuth(getInitialSync))).Methods("GET")
 }

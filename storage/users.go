@@ -87,7 +87,9 @@ func GetUser(db DBI, uid m.UserID) (*User, error) {
 	return &User{DBID(id), uid, PasswordHash{password, salt}, Timestamp(creation_ts), nil}, nil
 }
 
-func (u *User) GetRoomMemberships(db DBI) ([]o.InitialSyncRoomData, error) {
+// Fetch the users joined rooms and return it in a list for initial sync.
+// limit is used to limit the number of messages that is returned for each room.
+func (u *User) GetRoomMemberships(db DBI, limit uint64) ([]o.InitialSyncRoomData, error) {
 	rows, err := db.Query(
 		`SELECT r.room_id as id
 	FROM room_memberships r
@@ -99,6 +101,7 @@ func (u *User) GetRoomMemberships(db DBI) ([]o.InitialSyncRoomData, error) {
 	defer rows.Close()
 
 	var rooms []o.InitialSyncRoomData
+	// TODO(): Properly fill out the sync room data
 
 	for rows.Next() {
 		var roomId string
@@ -113,19 +116,32 @@ func (u *User) GetRoomMemberships(db DBI) ([]o.InitialSyncRoomData, error) {
 	return rooms, nil
 }
 
-func CreateUser(db DBI, user_id m.UserID) error {
-	result, err := db.Exec("INSERT OR FAIL INTO users (user_id, password, salt, creation_ts) VALUES (?, '', '', ?)", user_id.String(), time.Now().Unix())
+func (u *User) GetInitialPresence(db DBI) ([]o.InitialSyncEvent, error) {
+	// TODO(): Get initial presence
+	return []o.InitialSyncEvent{}, nil
+}
+
+func CreateUser(db DBI, user_id m.UserID) (*User, error) {
+	now := time.Now().Unix()
+	result, err := db.Exec(`INSERT OR FAIL
+		INTO users (
+			user_id,
+			password,
+			salt,
+			creation_ts)
+		VALUES (?, '', '', ?)`, user_id.String(), now)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	rows, err := result.RowsAffected()
-	if err != nil {
-		return err
+	if row_id, err := result.LastInsertId(); err != nil {
+		panic("matrix: could not get last insert id")
+	} else {
+		return &User{
+			ID:      DBID(row_id),
+			UserID:  user_id,
+			Created: Timestamp(now),
+		}, nil
 	}
-	if rows < 1 {
-		panic("Creating users did not affect any row")
-	}
-	return nil
 }
 
 func (u *User) UpdatePassword(db DBI, hash PasswordHash) error {

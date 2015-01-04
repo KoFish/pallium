@@ -1,49 +1,38 @@
 package rest
 
 import (
-	"crypto/md5"
-	"database/sql"
-	"fmt"
+	"github.com/KoFish/pallium/api"
 	u "github.com/KoFish/pallium/rest/utils"
 	s "github.com/KoFish/pallium/storage"
 	"github.com/gorilla/mux"
-	"log"
 	"net/http"
 )
 
 func setupProfile(root *mux.Router) {
-	root.HandleFunc("/profile/{profile}/avatar_url", u.JSONWithAuthReply(getAvatarUrl)).Methods("GET")
-	root.HandleFunc("/profile/{profile}/displayname", u.OptionsReply()).Methods("OPTIONS")
-	root.HandleFunc("/profile/{profile}/displayname", u.JSONWithAuthReply(getDisplayName)).Methods("GET")
+	root.HandleFunc("/profile/{user}/displayname", u.OptionsReply()).Methods("OPTIONS")
+	root.HandleFunc("/profile/{user}/avatar_url", u.OptionsReply()).Methods("OPTIONS")
+	root.Handle("/profile/{user}/avatar_url", u.JSONReply(u.RequireAuth(getAvatarURL))).Methods("GET")
+	root.Handle("/profile/{user}/avatar_url", u.JSONReply(u.RequireAuth(updateAvatarURL))).Methods("PUT")
+	root.Handle("/profile/{user}/displayname", u.JSONReply(u.RequireAuth(getDisplayName))).Methods("GET")
+	root.Handle("/profile/{user}/displayname", u.JSONReply(u.RequireAuth(updateDisplayName))).Methods("PUT")
 }
 
-func getDisplayName(db *sql.DB, user *s.User, w http.ResponseWriter, r *http.Request) (interface{}, error) {
-	var (
-		resp struct {
-			DisplayName string `json:"display_name"`
-		}
-	)
-
-	profile, err := user.GetProfile(db)
-	if err != nil {
-		log.Printf("matrix: could not get profile \"%v\"", err)
-		resp.DisplayName = ""
-	} else {
-		resp.DisplayName = profile.DisplayName
-	}
-
-	return resp, nil
+func getDisplayName(user *s.User, r *http.Request) (interface{}, error) {
+	defer r.Body.Close()
+	return api.GetDisplayName(user, r.Body, mux.Vars(r))
 }
 
-func getAvatarUrl(db *sql.DB, user *s.User, w http.ResponseWriter, r *http.Request) (interface{}, error) {
+func updateDisplayName(user *s.User, r *http.Request) (interface{}, error) {
+	defer r.Body.Close()
+	return api.GetDisplayName(user, r.Body, mux.Vars(r))
+}
 
-	var (
-		resp struct {
-			AvatarUrl string `json:"avatar_url"`
-		}
-	)
-	profileId := mux.Vars(r)["profile"]
-	resp.AvatarUrl = fmt.Sprintf("https://www.gravatar.com/avatar/%x?d=mm", md5.Sum([]byte(profileId)))
+func getAvatarURL(user *s.User, r *http.Request) (interface{}, error) {
+	defer r.Body.Close()
+	return api.GetDisplayName(user, r.Body, mux.Vars(r))
+}
 
-	return resp, nil
+func updateAvatarURL(user *s.User, r *http.Request) (interface{}, error) {
+	defer r.Body.Close()
+	return api.GetDisplayName(user, r.Body, mux.Vars(r))
 }

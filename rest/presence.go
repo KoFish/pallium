@@ -13,35 +13,25 @@
 package rest
 
 import (
-	"database/sql"
-	"encoding/json"
+	"github.com/KoFish/pallium/api"
 	u "github.com/KoFish/pallium/rest/utils"
 	s "github.com/KoFish/pallium/storage"
 	"github.com/gorilla/mux"
-	"log"
 	"net/http"
 )
 
-type presence struct {
-	Presence string `json:"presence"`
-}
-
 func setupPresence(root *mux.Router) {
 	root.HandleFunc("/presence/{user}/status", u.OptionsReply()).Methods("OPTIONS")
-	root.HandleFunc("/presence/{user}/status", u.JSONWithAuthReply(updatePresence)).Methods("PUT")
+	root.Handle("/presence/{user}/status", u.JSONReply(u.RequireAuth(updatePresence))).Methods("PUT")
+	root.Handle("/presence/{user}/status", u.JSONReply(u.RequireAuth(getPresence))).Methods("GET")
 }
 
-func updatePresence(db *sql.DB, user *s.User, w http.ResponseWriter, r *http.Request) (interface{}, error) {
-	presenceState := presence{}
-	decoder := json.NewDecoder(r.Body)
-	decoder.Decode(&presenceState)
+func updatePresence(user *s.User, r *http.Request) (interface{}, error) {
+	defer r.Body.Close()
+	return api.UpdatePresence(user, r.Body, mux.Vars(r))
+}
 
-	err := user.UpdatePresence(db, s.PresenceStates[presenceState.Presence], "foobar")
-
-	if err != nil {
-		log.Println(err)
-	}
-
-	log.Println(presenceState.Presence)
-	return nil, nil
+func getPresence(user *s.User, r *http.Request) (interface{}, error) {
+	defer r.Body.Close()
+	return api.GetPresence(user, r.Body, mux.Vars(r))
 }

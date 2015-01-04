@@ -13,84 +13,53 @@
 package utils
 
 import (
-	"database/sql"
 	"encoding/json"
-	m "github.com/KoFish/pallium/matrix"
+	"github.com/KoFish/pallium/api"
 	s "github.com/KoFish/pallium/storage"
 	"io"
+	"log"
 	"net/http"
 )
 
-type JSONResponse interface{}
-
 type HandlerFunc func(http.ResponseWriter, *http.Request)
-type JSONResponseFunc func(http.ResponseWriter, *http.Request) (interface{}, error)
-type JSONDBResponseFunc func(*sql.DB, http.ResponseWriter, *http.Request) (interface{}, error)
 
-func JSONReplyHandler(handler JSONResponseFunc) HandlerFunc {
-	responsefunc := func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-		enc := json.NewEncoder(w)
-		if data, err := handler(w, r); err != nil {
-			switch err.(type) {
-			case JSONError:
-				w.WriteHeader(400)
-				err.(JSONError).WriteError(w)
-			default:
-				io.WriteString(w, err.Error())
-			}
-		} else {
-			if err := enc.Encode(data); err != nil {
-				error := NewError(m.M_BAD_JSON, err.Error())
-				w.WriteHeader(400)
-				error.WriteError(w)
-			}
+type AuthJSONReply func(*s.User, *http.Request) (interface{}, error)
+type JSONReply func(*http.Request) (interface{}, error)
+
+func (fn JSONReply) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	if response, err := fn(r); err != nil {
+		switch apierr := err.(type) {
+		case api.Error:
+			log.Printf("[request from %v] %v", r.RemoteAddr, apierr.Error())
+			w.WriteHeader(400)
+			apierr.WriteTo(w)
+		default:
+			io.WriteString(w, err.Error())
+		}
+	} else {
+		if err = json.NewEncoder(w).Encode(response); err != nil {
+			w.WriteHeader(400)
+			api.EBadJSON(err.Error()).WriteTo(w)
 		}
 	}
-	return responsefunc
 }
 
-func DBAccessHandler(handler JSONDBResponseFunc) JSONResponseFunc {
-	responsefunc := func(w http.ResponseWriter, r *http.Request) (ret interface{}, err error) {
-		db := s.GetDatabase()
-		defer func() {
-			if r := recover(); r != nil {
-				ret = nil
-				err = NewError(m.M_FORBIDDEN, "Could not access database")
-			}
-		}()
-		ret, err = handler(db, w, r)
-		return
-	}
-	return responsefunc
-}
-
-type AuthorizedFunc func(*sql.DB, *s.User, http.ResponseWriter, *http.Request) (interface{}, error)
-
-func RequireAuth(handler AuthorizedFunc) JSONResponseFunc {
-	responsefunc := func(w http.ResponseWriter, r *http.Request) (interface{}, error) {
+func RequireAuth(fn AuthJSONReply) JSONReply {
+	return func(r *http.Request) (interface{}, error) {
 		token := r.URL.Query().Get("access_token")
 		if token == "" {
-			return nil, NewError(m.M_FORBIDDEN, "You are not authorized to access this resource")
+			return nil, api.EForbidden("Not authorized")
 		}
 		db := s.GetDatabase()
 		user, err := s.GetUserByToken(db, s.Token(token))
 		if err != nil {
-			return nil, NewError(m.M_UNKNOWN_TOKEN, "Could not verify token")
+			return nil, api.EUnknownToken("Unknown token")
 		}
-		return handler(db, user, w, r)
+		return fn(user, r)
 	}
-	return responsefunc
-}
-
-func JSONWithDBReply(handler JSONDBResponseFunc) HandlerFunc {
-	return JSONReplyHandler(DBAccessHandler(handler))
-}
-
-func JSONWithAuthReply(handler AuthorizedFunc) HandlerFunc {
-	return JSONReplyHandler(RequireAuth(handler))
 }
 
 func OptionsReply() HandlerFunc {
