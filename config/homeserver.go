@@ -21,8 +21,19 @@ import (
 var Config Configuration
 
 type Configuration struct {
-	Port                     int    `json:"port"`
-	Hostname                 string `json:"hostname"`
+	// how the server should refer to itself for access from the internet
+	// for federated traffic (e.g. matrix.org, or matrix.org:8000)
+	Port                     int    `json:"Port"`
+	Hostname                 string `json:"Hostname"`
+	
+	// where the server should listen for connections...
+	Listener				 string `json:"Listener"`
+	// ...and on which protocol (tcp4/tcp6/tcp).
+	// We make this explicit as on OSX go creates both tcp4 and tcp6
+	// listeners if you Listen on "tcp", "0.0.0.0:8008", despite
+	// 0.0.0.0 being an IPv4 address.
+	ListenerProtocol		 string `json:"ListenerProtocol"`
+	
 	DefaultPowerLevel        int64  `json:"DefaultPowerLevel"`
 	DefaultCreatorPowerLevel int64  `json:"DefaultCreatorPowerLevel"`
 }

@@ -278,11 +278,15 @@ func listPublicRooms(db *sql.DB, user *s.User, w http.ResponseWriter, r *http.Re
 	res.Start = "START"
 	res.End = "END"
 
-	tx, _ := db.Begin()
+	tx, err := db.Begin()
+	if err != nil {
+		return nil, u.NewError(m.M_FORBIDDEN, "Could not start database transaction: "+err.Error())
+	}
 	rooms := s.GetPublicRooms(tx)
 
 	res.Chunk = rooms
 
+	tx.Commit()
 	return res, nil
 }
 

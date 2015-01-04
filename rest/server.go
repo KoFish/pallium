@@ -16,10 +16,10 @@
 package rest
 
 import (
-	"fmt"
 	c "github.com/KoFish/pallium/config"
 	"github.com/gorilla/mux"
 	"log"
+	"net"
 	"net/http"
 )
 
@@ -43,8 +43,12 @@ func Setup() {
 }
 
 func Start() {
-	log.Printf("matrix: starting service at 0.0.0.0:%v", c.Config.Port)
-	if err := http.ListenAndServe(fmt.Sprintf(":%v", c.Config.Port), nil); err != nil {
+	log.Printf("matrix: starting service at %v", c.Config.Listener)
+	l, err := net.Listen(c.Config.ListenerProtocol, c.Config.Listener)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if err := http.Serve(l, nil); err != nil {
 		log.Printf("matrix: could not start up server \"%v\"", err)
 	}
 }
