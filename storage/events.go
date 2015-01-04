@@ -151,7 +151,7 @@ func GetPowerLevel(db DBI, room_id m.RoomID, state_key string) (int64, error) {
 	return power_level, nil
 }
 
-func CreateEvent(tx *sql.Tx, event_id m.EventID, user_id m.UserID, room_id m.RoomID, event_type string, content map[string]interface{}) error {
+func CreateEvent(tx TX, event_id m.EventID, user_id m.UserID, room_id m.RoomID, event_type string, content map[string]interface{}) error {
 	var (
 		content_json string
 		ts           int64 = time.Now().Unix()
@@ -207,7 +207,7 @@ func CreateEvent(tx *sql.Tx, event_id m.EventID, user_id m.UserID, room_id m.Roo
 	return err
 }
 
-func CreateStateEvent(tx *sql.Tx, event_id m.EventID, user_id m.UserID, room_id m.RoomID, event_type, state_key string, content map[string]interface{}) error {
+func CreateStateEvent(tx TX, event_id m.EventID, user_id m.UserID, room_id m.RoomID, event_type, state_key string, content map[string]interface{}) error {
 	prev_state, cs_err := getCurrentState(tx, room_id, event_type, state_key)
 	if err := CreateEvent(tx, event_id, user_id, room_id, event_type, content); err != nil {
 		return err
@@ -231,7 +231,7 @@ func CreateStateEvent(tx *sql.Tx, event_id m.EventID, user_id m.UserID, room_id 
 	return nil
 }
 
-func NewEvent(tx *sql.Tx, user_id m.UserID, room_id m.RoomID, event_type string, content map[string]interface{}) (m.EventID, error) {
+func NewEvent(tx TX, user_id m.UserID, room_id m.RoomID, event_type string, content map[string]interface{}) (m.EventID, error) {
 	event_id, err := m.GenerateEventID()
 	if err != nil {
 		return event_id, err
@@ -239,7 +239,7 @@ func NewEvent(tx *sql.Tx, user_id m.UserID, room_id m.RoomID, event_type string,
 	return event_id, CreateEvent(tx, event_id, user_id, room_id, event_type, content)
 }
 
-func NewStateEvent(tx *sql.Tx, user_id m.UserID, room_id m.RoomID, event_type, state_key string, content map[string]interface{}) (m.EventID, error) {
+func NewStateEvent(tx TX, user_id m.UserID, room_id m.RoomID, event_type, state_key string, content map[string]interface{}) (m.EventID, error) {
 	event_id, err := m.GenerateEventID()
 	if err != nil {
 		return event_id, err

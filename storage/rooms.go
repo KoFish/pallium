@@ -13,7 +13,6 @@
 package storage
 
 import (
-	"database/sql"
 	"fmt"
 	c "github.com/KoFish/pallium/config"
 	m "github.com/KoFish/pallium/matrix"
@@ -143,8 +142,8 @@ func GetRoom(db DBI, room_id m.RoomID) (*Room, error) {
 	}
 }
 
-func GetPublicRooms(tx *sql.Tx) []Room {
-	rows, err := tx.Query(
+func GetPublicRooms(db DBI) []Room {
+	rows, err := db.Query(
 		`SELECT r.room_id as id, count(rm.room_id) as membercount
         FROM rooms r, room_memberships rm
         WHERE is_public = 1 AND r.room_id = rm.room_id`)
@@ -174,7 +173,7 @@ func GetPublicRooms(tx *sql.Tx) []Room {
 	return rooms
 }
 
-func CreateRoom(tx *sql.Tx, creator m.UserID, is_public bool) (*Room, error) {
+func CreateRoom(tx TX, creator m.UserID, is_public bool) (*Room, error) {
 	var event_id m.EventID
 	room_id, err := m.GenerateRoomID()
 	if err != nil {
@@ -252,7 +251,7 @@ func (r *Room) GetJoinRule(db DBI) (m.RoomJoinRule, error) {
 	}
 }
 
-func (r *Room) UpdateJoinRule(tx *sql.Tx, sender m.UserID, new_join_rule m.RoomJoinRule) (err error) {
+func (r *Room) UpdateJoinRule(tx TX, sender m.UserID, new_join_rule m.RoomJoinRule) (err error) {
 	var event_id m.EventID
 	content := map[string]interface{}{"join_rule": string(new_join_rule)}
 	if event_id, err = NewStateEvent(tx, sender, r.ID, "m.room.join_rules", "", content); err != nil {
@@ -268,7 +267,7 @@ func (r *Room) UpdateJoinRule(tx *sql.Tx, sender m.UserID, new_join_rule m.RoomJ
 	}
 }
 
-func (r *Room) UpdateName(tx *sql.Tx, sender m.UserID, new_name string) (err error) {
+func (r *Room) UpdateName(tx TX, sender m.UserID, new_name string) (err error) {
 	var event_id m.EventID
 	content := map[string]interface{}{"name": new_name}
 	if event_id, err = NewStateEvent(tx, sender, r.ID, "m.room.name", "", content); err != nil {
@@ -284,7 +283,7 @@ func (r *Room) UpdateName(tx *sql.Tx, sender m.UserID, new_name string) (err err
 	}
 }
 
-func (r *Room) UpdateTopic(tx *sql.Tx, sender m.UserID, new_topic string) (err error) {
+func (r *Room) UpdateTopic(tx TX, sender m.UserID, new_topic string) (err error) {
 	var event_id m.EventID
 	content := map[string]interface{}{"topic": new_topic}
 	if event_id, err = NewStateEvent(tx, sender, r.ID, "m.room.topic", "", content); err != nil {
@@ -300,7 +299,7 @@ func (r *Room) UpdateTopic(tx *sql.Tx, sender m.UserID, new_topic string) (err e
 	}
 }
 
-func (r *Room) UpdateMember(tx *sql.Tx, sender m.UserID, target m.UserID, new_membership m.RoomMembership) (err error) {
+func (r *Room) UpdateMember(tx TX, sender m.UserID, target m.UserID, new_membership m.RoomMembership) (err error) {
 	var event_id m.EventID
 	content := map[string]interface{}{"membership": string(new_membership)}
 	if _, err = NewStateEvent(tx, sender, r.ID, "m.room.member", target.String(), content); err != nil {
@@ -317,7 +316,7 @@ func (r *Room) UpdateMember(tx *sql.Tx, sender m.UserID, target m.UserID, new_me
 	}
 }
 
-func (r *Room) UpdateAliases(tx *sql.Tx, sender m.UserID, new_aliases []m.RoomAlias) (err error) {
+func (r *Room) UpdateAliases(tx TX, sender m.UserID, new_aliases []m.RoomAlias) (err error) {
 	var event_id m.EventID
 	aliases := make([]string, len(new_aliases))
 	for i := 0; i < len(new_aliases); i++ {
@@ -341,7 +340,7 @@ func (r *Room) UpdateAliases(tx *sql.Tx, sender m.UserID, new_aliases []m.RoomAl
 	}
 }
 
-func (r *Room) UpdatePowerLevels(tx *sql.Tx, sender m.UserID, new_levels map[m.UserID]int64, default_level *int64) (err error) {
+func (r *Room) UpdatePowerLevels(tx TX, sender m.UserID, new_levels map[m.UserID]int64, default_level *int64) (err error) {
 	var (
 		levels   map[string]interface{} = make(map[string]interface{})
 		event_id m.EventID
@@ -383,7 +382,7 @@ func (r *Room) UpdatePowerLevels(tx *sql.Tx, sender m.UserID, new_levels map[m.U
 	return
 }
 
-func (r *Room) UpdateAddStateLevel(tx *sql.Tx, sender m.UserID, new_level int64) (err error) {
+func (r *Room) UpdateAddStateLevel(tx TX, sender m.UserID, new_level int64) (err error) {
 	var event_id m.EventID
 	content := map[string]interface{}{"level": new_level}
 	if event_id, err = NewStateEvent(tx, sender, r.ID, "m.room.add_state_level", "", content); err != nil {
@@ -397,7 +396,7 @@ func (r *Room) UpdateAddStateLevel(tx *sql.Tx, sender m.UserID, new_level int64)
 	return
 }
 
-func (r *Room) UpdateSendEventLevel(tx *sql.Tx, sender m.UserID, new_level int64) (err error) {
+func (r *Room) UpdateSendEventLevel(tx TX, sender m.UserID, new_level int64) (err error) {
 	var event_id m.EventID
 	content := map[string]interface{}{"level": new_level}
 	if event_id, err = NewStateEvent(tx, sender, r.ID, "m.room.send_event_level", "", content); err != nil {
@@ -419,7 +418,7 @@ func (r *Room) GetOpsLevels(db DBI) (ban int64, kick int64, redact int64, err er
 	return
 }
 
-func (r *Room) UpdateOpsLevel(tx *sql.Tx, sender m.UserID, new_levels map[string]int64) (err error) {
+func (r *Room) UpdateOpsLevel(tx TX, sender m.UserID, new_levels map[string]int64) (err error) {
 	var (
 		event_id     m.EventID
 		content      map[string]interface{} = make(map[string]interface{})
@@ -498,7 +497,7 @@ func canBan(is_self, s_joined bool, s_level, r_ban_level int64) bool {
 	return s_joined && s_level >= r_ban_level
 }
 
-func (r *Room) CheckedUpdateMember(tx *sql.Tx, sender, target m.UserID, new_membership m.RoomMembership) (err error) {
+func (r *Room) CheckedUpdateMember(tx TX, sender, target m.UserID, new_membership m.RoomMembership) (err error) {
 	var (
 		room_join_rule    m.RoomJoinRule
 		room_invite_level int64

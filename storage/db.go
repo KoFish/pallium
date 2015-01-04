@@ -32,7 +32,18 @@ type DBI interface {
 	QueryRow(string, ...interface{}) *sql.Row
 }
 
-func GetDatabase() *sql.DB {
+type DB interface {
+	DBI
+	Begin() (*sql.Tx, error)
+}
+
+type TX interface {
+	DBI
+	Commit() error
+	Rollback() error
+}
+
+func GetDatabase() DB {
 	if gDB == nil {
 		if db, err := sql.Open("sqlite3", "test.db"); err != nil {
 			panic("matrix: could not open database: " + err.Error())
