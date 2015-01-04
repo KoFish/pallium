@@ -10,6 +10,7 @@
 //    See the License for the specific language governing permissions and
 //    limitations under the License.
 
+// TODO: Should be deleted
 package matrix
 
 // Enumerates the protocol defined errors that can be returned when performing
