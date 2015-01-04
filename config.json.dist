@@ -1,6 +1,8 @@
 {
 "port": 8008,
-"hostname": "example.com",
+"hostname": "localhost",
+"listener": "0.0.0.0:8008",
+"listener-protocol": "tcp4",
 "default-power-level": 50,
 "default-creator-power-level": 100
 }
