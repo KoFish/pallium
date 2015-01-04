@@ -147,7 +147,8 @@ func GetPublicRooms(tx *sql.Tx) []Room {
 	rows, err := tx.Query(
 		`SELECT r.room_id as id, count(rm.room_id) as membercount
         FROM rooms r, room_memberships rm
-        WHERE is_public = 1 AND r.room_id = rm.room_id`)
+        WHERE is_public = 1 AND r.room_id = rm.room_id
+        GROUP BY rm.room_id`)
 
 	if err != nil {
 		log.Println(err)
