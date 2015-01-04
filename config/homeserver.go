@@ -23,8 +23,8 @@ var Config Configuration
 type Configuration struct {
 	Port                     int    `json:"port"`
 	Hostname                 string `json:"hostname"`
-	DefaultPowerLevel        int64  `json:"DefaultPowerLevel"`
-	DefaultCreatorPowerLevel int64  `json:"DefaultCreatorPowerLevel"`
+	DefaultPowerLevel        int64  `json:"default-power-level"`
+	DefaultCreatorPowerLevel int64  `json:"default-creator-power-level"`
 }
 
 func load(configfile string) Configuration {
