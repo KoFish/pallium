@@ -25,7 +25,7 @@ type Error struct {
 }
 
 func (e Error) Error() string {
-	return fmt.Sprintf("%v: %v", e.ErrorCode, e.Error)
+	return fmt.Sprintf("%v: %v", e.ErrorCode, e.ErrorMsg)
 }
 
 // WriteTo should really be able to implement the io.WriterTo interface but
