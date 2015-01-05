@@ -16,6 +16,11 @@
 // and only takes and produces json-serializable objects.
 package api
 
+import (
+	s "github.com/KoFish/pallium/storage"
+	"io"
+)
+
 /// This file is primarily for documentation of the API package
 
 type (
@@ -31,3 +36,8 @@ func (q Query) GetOne(key, defval string) (string, bool) {
 		return defval, false
 	}
 }
+
+type (
+	SimpleEndpoint func(io.Reader, Vars, Query) (interface{}, error)
+	AuthEndpoint   func(*s.User, io.Reader, Vars, Query) (interface{}, error)
+)

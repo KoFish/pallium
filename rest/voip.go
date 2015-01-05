@@ -20,7 +20,7 @@ import (
 )
 
 func setupVoip(root *mux.Router) {
-	root.HandleFunc("/voip/turnServer", u.OptionsReply()).Methods("OPTIONS")
+	root.HandleFunc("/voip/turnServer", u.OptionsReply).Methods("OPTIONS")
 	root.Handle("/voip/turnServer", u.JSONReply(u.RequireAuth(getTurnServer))).Methods("GET")
 }
 

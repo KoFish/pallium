@@ -15,24 +15,12 @@ package rest
 import (
 	"github.com/KoFish/pallium/api"
 	u "github.com/KoFish/pallium/rest/utils"
-	s "github.com/KoFish/pallium/storage"
 	"github.com/gorilla/mux"
-	"net/http"
 )
 
-func getEvents(user *s.User, r *http.Request) (interface{}, error) {
-	defer r.Body.Close()
-	return api.GetEvents(user, r.Body, mux.Vars(r), api.Query(r.URL.Query()))
-}
-
-func getInitialSync(user *s.User, r *http.Request) (interface{}, error) {
-	defer r.Body.Close()
-	return api.GetInitialSync(user, r.Body, mux.Vars(r), api.Query(r.URL.Query()))
-}
-
 func setupEvents(root *mux.Router) {
-	root.HandleFunc("/events", u.OptionsReply()).Methods("OPTIONS")
-	root.HandleFunc("/initialSync", u.OptionsReply()).Methods("OPTIONS")
-	root.Handle("/events", u.JSONReply(u.RequireAuth(getEvents))).Methods("GET")
-	root.Handle("/initialSync", u.JSONReply(u.RequireAuth(getInitialSync))).Methods("GET")
+	root.HandleFunc("/events", u.OptionsReply).Methods("OPTIONS")
+	root.HandleFunc("/initialSync", u.OptionsReply).Methods("OPTIONS")
+	root.Handle("/events", u.AuthAPIEndpoint(api.GetEvents)).Methods("GET")
+	root.Handle("/initialSync", u.AuthAPIEndpoint(api.GetInitialSync)).Methods("GET")
 }

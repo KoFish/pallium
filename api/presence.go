@@ -20,7 +20,7 @@ import (
 	"log"
 )
 
-func GetPresence(cur_user *s.User, request io.Reader, vars map[string]string) (interface{}, error) {
+func GetPresence(cur_user *s.User, request io.Reader, vars Vars, query Query) (interface{}, error) {
 	var presence struct {
 		Presence  string `json:"presence"`
 		StatusMsg string `json:"status_msg,omitempty"`
@@ -51,7 +51,7 @@ func GetPresence(cur_user *s.User, request io.Reader, vars map[string]string) (i
 	}
 }
 
-func UpdatePresence(user *s.User, request io.Reader, vars map[string]string) (interface{}, error) {
+func UpdatePresence(user *s.User, request io.Reader, vars Vars, query Query) (interface{}, error) {
 	var presence struct {
 		Presence  string `json:"presence"`
 		StatusMsg string `json:"status_msg,omitempty"`

@@ -22,7 +22,7 @@ import (
 	"log"
 )
 
-func GetDisplayName(req_user *s.User, request io.Reader, vars map[string]string) (interface{}, error) {
+func GetDisplayName(req_user *s.User, request io.Reader, vars Vars, q Query) (interface{}, error) {
 	var response struct {
 		DisplayName string `json:"display_name"`
 	}
@@ -50,7 +50,7 @@ func GetDisplayName(req_user *s.User, request io.Reader, vars map[string]string)
 	}
 }
 
-func UpdateDisplayName(user *s.User, request io.Reader, vars map[string]string) (interface{}, error) {
+func UpdateDisplayName(user *s.User, request io.Reader, vars Vars, q Query) (interface{}, error) {
 	var response struct {
 		DisplayName string `json:"display_name"`
 	}
@@ -82,7 +82,7 @@ func UpdateDisplayName(user *s.User, request io.Reader, vars map[string]string) 
 	return response, nil
 }
 
-func GetAvatarURL(req_user *s.User, request io.Reader, vars map[string]string) (interface{}, error) {
+func GetAvatarURL(req_user *s.User, request io.Reader, vars Vars, q Query) (interface{}, error) {
 	var response struct {
 		AvatarURL string `json:"avatar_url"`
 	}
@@ -113,7 +113,7 @@ func GetAvatarURL(req_user *s.User, request io.Reader, vars map[string]string) (
 	}
 }
 
-func UpdateAvatarURL(user *s.User, request io.Reader, vars map[string]string) (interface{}, error) {
+func UpdateAvatarURL(user *s.User, request io.Reader, vars Vars, q Query) (interface{}, error) {
 	var response struct {
 		AvatarURL string `json:"avatar_url"`
 	}

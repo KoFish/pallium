@@ -15,23 +15,11 @@ package rest
 import (
 	"github.com/KoFish/pallium/api"
 	u "github.com/KoFish/pallium/rest/utils"
-	s "github.com/KoFish/pallium/storage"
 	"github.com/gorilla/mux"
-	"net/http"
 )
 
 func setupPresence(root *mux.Router) {
-	root.HandleFunc("/presence/{user}/status", u.OptionsReply()).Methods("OPTIONS")
-	root.Handle("/presence/{user}/status", u.JSONReply(u.RequireAuth(updatePresence))).Methods("PUT")
-	root.Handle("/presence/{user}/status", u.JSONReply(u.RequireAuth(getPresence))).Methods("GET")
-}
-
-func updatePresence(user *s.User, r *http.Request) (interface{}, error) {
-	defer r.Body.Close()
-	return api.UpdatePresence(user, r.Body, mux.Vars(r))
-}
-
-func getPresence(user *s.User, r *http.Request) (interface{}, error) {
-	defer r.Body.Close()
-	return api.GetPresence(user, r.Body, mux.Vars(r))
+	root.HandleFunc("/presence/{user}/status", u.OptionsReply).Methods("OPTIONS")
+	root.Handle("/presence/{user}/status", u.AuthAPIEndpoint(api.UpdatePresence)).Methods("PUT")
+	root.Handle("/presence/{user}/status", u.AuthAPIEndpoint(api.GetPresence)).Methods("GET")
 }

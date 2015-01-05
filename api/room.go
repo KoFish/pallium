@@ -209,3 +209,181 @@ func CreateRoom(user *s.User, req io.Reader, vars Vars, query Query) (interface{
 	}
 	return response, nil
 }
+
+/// From the rest/rooms.go file
+
+// func roomAliasLookup(db *sql.DB, user *s.User, w http.ResponseWriter, r *http.Request) (interface{}, error) {
+//     var (
+//         req  struct{}
+//         resp struct {
+//             RoomID  string   `json:"room_id"`
+//             Servers []string `json:"servers"`
+//         }
+//     )
+//     vars := mux.Vars(r)
+//     q_room, _ := vars["roomalias"]
+//     body, err := ioutil.ReadAll(r.Body)
+//     if err != nil {
+//         return nil, err
+//     }
+//     if err = json.Unmarshal(body, &req); err != nil {
+//         return nil, u.NewError(m.M_NOT_JSON, "Could not parse json: "+err.Error())
+//     }
+//     if room_alias, err := m.ParseRoomAlias(q_room); err != nil {
+//         return nil, u.NewError(m.M_FORBIDDEN, "Not a valid room alias")
+//     } else {
+//         room_id, servers, err := s.LookupRoomAlias(db, room_alias)
+//         if err != nil {
+//             return nil, u.NewError(m.M_FORBIDDEN, "Unknown room alias")
+//         } else {
+//             resp.RoomID = room_id.String()
+//             resp.Servers = servers
+//             return resp, nil
+//         }
+//     }
+// }
+
+// func roomAliasCreate(db *sql.DB, user *s.User, w http.ResponseWriter, r *http.Request) (interface{}, error) {
+//     var (
+//         req struct {
+//             RoomID string `json:"room_id"`
+//         }
+//         resp struct {
+//             RoomID  string   `json:"room_id"`
+//             Servers []string `json:"servers"`
+//         }
+//         room_id m.RoomID
+//     )
+//     vars := mux.Vars(r)
+//     q_room, _ := vars["roomalias"]
+//     body, err := ioutil.ReadAll(r.Body)
+//     if err != nil {
+//         return nil, err
+//     }
+//     if err = json.Unmarshal(body, &req); err != nil {
+//         return nil, u.NewError(m.M_NOT_JSON, "Could not parse json: "+err.Error())
+//     }
+//     if room_alias, err := m.ParseRoomAlias(q_room); err != nil {
+//         return nil, u.NewError(m.M_FORBIDDEN, "Not a valid room alias")
+//     } else {
+//         return nil, u.NewError(m.M_FORBIDDEN, "Not allowed to delete alias")
+//     }
+// }
+
+// func roomAliasDelete(db *sql.DB, user *s.User, w http.ResponseWriter, r *http.Request) (interface{}, error) {
+//     var (
+//         req  struct{}
+//         resp struct {
+//             RoomID string `json:"room_id"`
+//         }
+//         room_id m.RoomID
+//     )
+//     vars := mux.Vars(r)
+//     q_room, _ := vars["roomalias"]
+//     body, err := ioutil.ReadAll(r.Body)
+//     if err != nil {
+//         return nil, err
+//     }
+//     if err = json.Unmarshal(body, &req); err != nil {
+//         return nil, u.NewError(m.M_NOT_JSON, "Could not parse json: "+err.Error())
+//     }
+//     if room_alias, err := m.ParseRoomAlias(q_room); err != nil {
+//         return nil, u.NewError(m.M_FORBIDDEN, "Not a valid room alias")
+//     } else {
+//         return nil, u.NewError(m.M_FORBIDDEN, "Not allowed to delete alias")
+//     }
+// }
+
+// func leaveRoom(db *sql.DB, user *s.User, w http.ResponseWriter, r *http.Request) (interface{}, error) {
+//     var (
+//         req  leaveRoomRequest
+//         resp leaveRoomResponse
+//     )
+//     if !u.CheckTxnId(r) {
+//         return nil, u.NewError(m.M_FORBIDDEN, "Request has already been sent")
+//     }
+//     vars := mux.Vars(r)
+//     q_room := r.URL.Query().Get("room")
+//     body, err := ioutil.ReadAll(r.Body)
+//     if err != nil {
+//         return nil, err
+//     }
+//     if err = json.Unmarshal(body, &req); err != nil {
+//         return nil, u.NewError(m.M_NOT_JSON, "Could not parse json: "+err.Error())
+//     }
+//     resp = leaveRoomResponse{rid}
+//     return resp, nil
+// }
+
+// func inviteRoom(db *sql.DB, user *s.User, w http.ResponseWriter, r *http.Request) (interface{}, error) {
+//     var (
+//         req  inviteRoomRequest
+//         resp inviteRoomResponse
+//     )
+//     if !u.CheckTxnId(r) {
+//         return nil, u.NewError(m.M_FORBIDDEN, "Request has already been sent")
+//     }
+//     vars := mux.Vars(r)
+//     q_room := r.URL.Query().Get("room")
+//     body, err := ioutil.ReadAll(r.Body)
+//     if err != nil {
+//         return nil, err
+//     }
+//     if err = json.Unmarshal(body, &req); err != nil {
+//         return nil, u.NewError(m.M_NOT_JSON, "Could not parse json: "+err.Error())
+//     }
+//     resp = inviteRoomResponse{rid}
+//     return resp, nil
+// }
+
+// func banRoom(db *sql.DB, user *s.User, w http.ResponseWriter, r *http.Request) (interface{}, error) {
+//     var (
+//         req  banRoomRequest
+//         resp banRoomResponse
+//     )
+//     if !u.CheckTxnId(r) {
+//         return nil, u.NewError(m.M_FORBIDDEN, "Request has already been sent")
+//     }
+//     vars := mux.Vars(r)
+//     q_room := r.URL.Query().Get("room")
+//     body, err := ioutil.ReadAll(r.Body)
+//     if err != nil {
+//         return nil, err
+//     }
+//     if err = json.Unmarshal(body, &req); err != nil {
+//         return nil, u.NewError(m.M_NOT_JSON, "Could not parse json: "+err.Error())
+//     }
+//     resp = banRoomResponse{rid}
+//     return resp, nil
+// }
+//
+//func setRoomState(db *sql.DB, user *s.User, w http.ResponseWriter, r *http.Request) (interface{}, error) {
+//    var (
+//        req  roomStateRequest
+//        resp roomStateResponse
+//    )
+//    if !u.CheckTxnId(r) {
+//        return nil, u.NewError(m.M_FORBIDDEN, "Request has already been sent")
+//    }
+//    vars := mux.Vars(r)
+//    q_room := r.URL.Query().Get("room")
+//    q_state_type := r.URL.Query().Get("state_type")
+//    q_state_key := r.URL.Query().Get("state_key")
+//    body, err := ioutil.ReadAll(r.Body)
+//    if err != nil {
+//        return nil, err
+//    }
+//    if err = json.Unmarshal(body, &req); err != nil {
+//        return nil, u.NewError(m.M_NOT_JSON, "Could not parse json: "+err.Error())
+//    }
+//    room_id, err := m.ParseRoomID(q_room)
+//    if err != nil {
+//        return nil, u.NewError(m.M_FORBIDDEN, "Room is not a valid room ID")
+//    }
+//    room, err := s.GetRoom(room_id)
+//    if err != nil {
+//        return nil, u.NewError(m.M_FORBIDDEN, "No such room exists")
+//    }
+//    resp = roomStateResponse{rid}
+//    return resp, nil
+//}

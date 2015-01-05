@@ -16,12 +16,16 @@ import (
 	"encoding/json"
 	"github.com/KoFish/pallium/api"
 	s "github.com/KoFish/pallium/storage"
+	"github.com/gorilla/mux"
 	"io"
 	"log"
 	"net/http"
+	"strconv"
 )
 
-type HandlerFunc func(http.ResponseWriter, *http.Request)
+var (
+	prevrequest = map[string]uint64{}
+)
 
 type AuthJSONReply func(*s.User, *http.Request) (interface{}, error)
 type JSONReply func(*http.Request) (interface{}, error)
@@ -62,13 +66,43 @@ func RequireAuth(fn AuthJSONReply) JSONReply {
 	}
 }
 
-func OptionsReply() HandlerFunc {
-	responsefunc := func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "POST,GET,PUT,OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-		w.Header().Set("Allow", "POST,GET,PUT,OPTIONS")
+func TxnID(fn JSONReply) JSONReply {
+	return func(r *http.Request) (interface{}, error) {
+		txnid, txnok := mux.Vars(r)["txnId"]
+		token := r.URL.Query().Get("access_token")
+		if r.Method == "PUT" && txnok && txnid != "" {
+			if itxnid, err := strconv.ParseUint(txnid, 10, 64); err == nil {
+				if prevrequest[token] == itxnid {
+					return nil, api.EForbidden("Repeated transaction id")
+				}
+				return fn(r)
+			} else {
+				return nil, api.ENotFound("Invalid transaction id, needs to be an integer")
+			}
+		} else {
+			return nil, api.EForbidden("Not allowed without transaction id")
+		}
 	}
-	return responsefunc
+}
+
+func APIEndpoint(fn api.SimpleEndpoint) JSONReply {
+	return func(r *http.Request) (interface{}, error) {
+		defer r.Body.Close()
+		return fn(r.Body, api.Vars(mux.Vars(r)), api.Query(r.URL.Query()))
+	}
+}
+
+func AuthAPIEndpoint(fn api.AuthEndpoint) JSONReply {
+	return RequireAuth(func(user *s.User, r *http.Request) (interface{}, error) {
+		defer r.Body.Close()
+		return fn(user, r.Body, api.Vars(mux.Vars(r)), api.Query(r.URL.Query()))
+	})
+}
+
+func OptionsReply(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "POST,GET,PUT,OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	w.Header().Set("Allow", "POST,GET,PUT,OPTIONS")
 }

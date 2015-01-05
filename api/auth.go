@@ -29,7 +29,7 @@ type loginFlows struct {
 	Flows []loginFlow `json:"flows"`
 }
 
-func GetLoginFlows(request io.Reader) (interface{}, error) {
+func GetLoginFlows(request io.Reader, v Vars, q Query) (interface{}, error) {
 	return loginFlows{
 		Flows: []loginFlow{
 			loginFlow{
@@ -43,7 +43,7 @@ func GetLoginFlows(request io.Reader) (interface{}, error) {
 // Request login authentication for a user, an api.Error will be returned
 // if the authentication did not succeed. Otherwise a proper response
 // according to chosen login type should be returned.
-func LoginRequest(request io.Reader) (interface{}, error) {
+func LoginRequest(request io.Reader, v Vars, q Query) (interface{}, error) {
 	var requestdata map[string]interface{} = make(map[string]interface{})
 	if err := json.NewDecoder(request).Decode(&requestdata); err != nil {
 		return nil, ENotJSON(err.Error())
@@ -74,7 +74,7 @@ func LoginRequest(request io.Reader) (interface{}, error) {
 // Request registration of a new user, an api.Error will be returned
 // if the registration did not succeed. Otherwise a proper response
 // according to chosen registration type should be returned.
-func RegistrationRequest(request io.Reader) (interface{}, error) {
+func RegistrationRequest(request io.Reader, v Vars, q Query) (interface{}, error) {
 	var requestdata map[string]interface{} = make(map[string]interface{})
 	if err := json.NewDecoder(request).Decode(&requestdata); err != nil {
 		return nil, ENotJSON(err.Error())
