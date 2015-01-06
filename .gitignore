@@ -7,3 +7,6 @@
 
 #config
 config.json
+
+#Generated
+storage/schemas.go

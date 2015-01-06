@@ -18,6 +18,14 @@ import (
 	"database/sql"
 	_ "github.com/mxk/go-sqlite/sqlite3"
 	"log"
+	"time"
+)
+
+type (
+	DBID      int64
+	Token     string
+	Password  string
+	Timestamp int64
 )
 
 var (
@@ -54,28 +62,33 @@ func GetDatabase() DB {
 	return gDB
 }
 
-func Setup() error {
-	var db_tables map[string]string = map[string]string{
-		"user_table":         user_table,
-		"rooms_table":        rooms_table,
-		"events_table":       events_table,
-		"profile_table":      profile_table,
-		"presence_table":     presence_table,
-		"access_token_table": access_token_table,
-	}
+func Now() int64 {
+	return time.Now().UnixNano() / int64(time.Millisecond)
+}
 
+func Setup() error {
 	db := GetDatabase()
-	tx, err := db.Begin()
-	if err != nil {
-		panic("Could not open database transaction")
-	}
-	for name, table := range db_tables {
-		log.Printf("matrix: setting up DB table %v\n", name)
-		if _, err := tx.Exec(table); err != nil {
-			tx.Rollback()
-			panic("Could not setup " + name + ": " + err.Error())
+	if tx, err := db.Begin(); err != nil {
+		panic("matrix: could not open database transaction")
+	} else {
+		schemas, err := AssetDir("schemas")
+		if err != nil {
+			log.Fatal("matrix: no schemas found")
 		}
+		for _, schema := range schemas {
+			log.Printf("matrix: setting up DB table %v\n", schema)
+			table, err := Asset("schemas/" + schema)
+			if err != nil {
+				tx.Rollback()
+				panic("matrix: could not load table")
+			}
+			if _, err := tx.Exec(string(table)); err != nil {
+				tx.Rollback()
+				log.Println(err.Error())
+				panic("matrix: could not setup table")
+			}
+		}
+		tx.Commit()
 	}
-	tx.Commit()
 	return nil
 }

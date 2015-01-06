@@ -19,112 +19,13 @@ import (
 	"log"
 )
 
-const rooms_table = `
-CREATE TABLE IF NOT EXISTS
-rooms (
-    event_id TEXT,
-    room_id TEXT PRIMARY KEY NOT NULL,
-    is_public INTEGER,
-    creator TEXT
-);
-
-CREATE TABLE IF NOT EXISTS
-room_names (
-    event_id TEXT NOT NULL,
-    room_id TEXT NOT NULL,
-    name TEXT NOT NULL,
-    CONSTRAINT uniqueness UNIQUE (room_id)
-);
-
-CREATE TABLE IF NOT EXISTS
-room_topics (
-    event_id TEXT NOT NULL,
-    room_id TEXT NOT NULL,
-    topic TEXT NOT NULL,
-    CONSTRAINT uniqueness UNIQUE (room_id)
-);
-
-CREATE TABLE IF NOT EXISTS
-room_join_rules (
-    event_id TEXT NOT NULL,
-    room_id TEXT NOT NULL,
-    join_rule TEXT NOT NULL,
-    CONSTRAINT uniqueness UNIQUE (room_id)
-);
-
-CREATE TABLE IF NOT EXISTS
-room_power_levels (
-    event_id TEXT NOT NULL,
-    room_id TEXT NOT NULL,
-    user_id TEXT NOT NULL,
-    level INTEGER NOT NULL,
-    CONSTRAINT uniqueness UNIQUE (room_id, user_id)
-);
-
-CREATE TABLE IF NOT EXISTS
-room_default_levels (
-    event_id TEXT NOT NULL,
-    room_id TEXT NOT NULL,
-    level INTEGER NOT NULL,
-    CONSTRAINT uniqueness UNIQUE (room_id)
-);
-
-CREATE TABLE IF NOT EXISTS
-room_add_state_levels (
-    event_id TEXT NOT NULL,
-    room_id TEXT NOT NULL,
-    level INTEGER NOT NULL,
-    CONSTRAINT uniqueness UNIQUE (room_id)
-);
-
-CREATE TABLE IF NOT EXISTS
-room_send_event_levels (
-    event_id TEXT NOT NULL,
-    room_id TEXT NOT NULL,
-    level INTEGER NOT NULL,
-    CONSTRAINT uniqueness UNIQUE (room_id)
-);
-
-CREATE TABLE IF NOT EXISTS
-room_ops_levels (
-    event_id TEXT NOT NULL,
-    room_id TEXT NOT NULL,
-    ban_level INTEGER NOT NULL,
-    kick_level INTEGER NOT NULL,
-    redact_level INTEGER NOT NULL,
-    CONSTRAINT uniqueness UNIQUE (room_id)
-);
-
-CREATE TABLE IF NOT EXISTS
-room_aliases (
-    event_id TEXT NOT NULL,
-    room_alias TEXT NOT NULL,
-    room_id TEXT NOT NULL,
-    server TEXT NOT NULL,
-    CONSTRAINT uniqueness UNIQUE (room_alias)
-);
-
-CREATE TABLE IF NOT EXISTS
-room_memberships (
-    event_id TEXT NOT NULL,
-    room_id TEXT NOT NULL,
-    user_id TEXT NOT NULL,
-    membership TEXT,
-    CONSTRAINT uniqueness UNIQUE (room_id, user_id)
-)
-`
-
-//type Room struct {
-//    ID m.RoomID `sql:"room_id"`
-//}
-
 type Room struct {
+	ID            m.RoomID `json:"-"`
 	Aliases       []string `json:"aliases"`
 	Name          string   `json:"name"`
 	JoinedMembers int      `json:"num_joined_members"`
 	RoomId        string   `json:"room_id"`
 	Topic         string   `json:"topic"`
-	ID            m.RoomID `json:"-"`
 }
 
 func LookupRoomAlias(db DBI, room_alias m.RoomAlias) (m.RoomID, []string, error) {
@@ -138,16 +39,18 @@ func GetRoom(db DBI, room_id m.RoomID) (*Room, error) {
 	if err := row.Scan(&exists); err != nil {
 		return nil, fmt.Errorf("matrix: no such room exists")
 	} else {
-		return &Room{ID: room_id}, nil
+		return &Room{
+			ID: room_id,
+		}, nil
 	}
 }
 
 func GetPublicRooms(db DBI) []Room {
-	rows, err := db.Query(
-		`SELECT r.room_id as id, count(rm.room_id) as membercount
-        FROM rooms r, room_memberships rm
-        WHERE is_public = 1 AND r.room_id = rm.room_id
-        GROUP BY rm.room_id`)
+	rows, err := db.Query(`
+		SELECT r.room_id as id, count(rm.room_id) as membercount
+			FROM rooms r, room_memberships rm
+			WHERE is_public = 1 AND r.room_id = rm.room_id
+			GROUP BY rm.room_id`)
 
 	if err != nil {
 		log.Println(err)
@@ -184,13 +87,14 @@ func CreateRoom(tx TX, creator m.UserID, is_public bool) (*Room, error) {
 	if event_id, err = NewEvent(tx, creator, room_id, "m.room.create", content); err != nil {
 		return nil, err
 	} else {
-		if _, err = tx.Exec(`INSERT
-            INTO rooms (
-                event_id,
-                room_id,
-                is_public,
-                creator)
-            VALUES (?, ?, ?, ?)`, event_id.String(), room_id.String(), is_public, creator.String()); err != nil {
+		if _, err = tx.Exec(`
+			INSERT
+				INTO rooms (
+					event_id,
+					room_id,
+					is_public,
+					creator)
+				VALUES (?, ?, ?, ?)`, event_id.String(), room_id.String(), is_public, creator.String()); err != nil {
 			return nil, err
 		}
 	}
@@ -199,9 +103,10 @@ func CreateRoom(tx TX, creator m.UserID, is_public bool) (*Room, error) {
 
 func (r *Room) GetUserPowerLevel(db DBI, user_id m.UserID) (int64, error) {
 	var powerlevel int64
-	row := db.QueryRow(`SELECT level
-        FROM room_power_levels
-        WHERE user_id=? AND room_id=?`, user_id.String(), r.ID.String())
+	row := db.QueryRow(`
+		SELECT level
+		FROM room_power_levels
+		WHERE user_id=? AND room_id=?`, user_id.String(), r.ID.String())
 	if err := row.Scan(&powerlevel); err != nil {
 		return powerlevel, err
 	}
@@ -210,9 +115,10 @@ func (r *Room) GetUserPowerLevel(db DBI, user_id m.UserID) (int64, error) {
 
 func (r *Room) GetUserMembership(db DBI, user_id m.UserID) (m.RoomMembership, error) {
 	var membership string
-	row := db.QueryRow(`SELECT membership
-        FROM room_memberships
-        WHERE user_id=? AND room_id=?`, user_id.String(), r.ID.String())
+	row := db.QueryRow(`
+		SELECT membership
+		FROM room_memberships
+		WHERE user_id=? AND room_id=?`, user_id.String(), r.ID.String())
 	if err := row.Scan(&membership); err != nil {
 		return "", err
 	}
@@ -232,9 +138,10 @@ func (r *Room) GetUserMembership(db DBI, user_id m.UserID) (m.RoomMembership, er
 
 func (r *Room) GetJoinRule(db DBI) (m.RoomJoinRule, error) {
 	var join_rule string
-	row := db.QueryRow(`SELECT join_rule
-        FROM room_join_rules
-        WHERE room_id=?`, r.ID.String())
+	row := db.QueryRow(`
+		SELECT join_rule
+		FROM room_join_rules
+		WHERE room_id=?`, r.ID.String())
 	if err := row.Scan(&join_rule); err != nil {
 		return m.JOIN_PRIVATE, err
 	}
@@ -258,12 +165,13 @@ func (r *Room) UpdateJoinRule(tx TX, sender m.UserID, new_join_rule m.RoomJoinRu
 	if event_id, err = NewStateEvent(tx, sender, r.ID, "m.room.join_rules", "", content); err != nil {
 		return
 	} else {
-		_, err = tx.Exec(`INSERT OR REPLACE
-            INTO room_join_rules (
-                event_id,
-                room_id,
-                join_rule)
-            VALUES (?, ?, ?)`, event_id.String(), r.ID.String(), string(new_join_rule))
+		_, err = tx.Exec(`
+			INSERT OR REPLACE
+			INTO room_join_rules (
+				event_id,
+				room_id,
+				join_rule)
+			VALUES (?, ?, ?)`, event_id.String(), r.ID.String(), string(new_join_rule))
 		return
 	}
 }
@@ -274,12 +182,13 @@ func (r *Room) UpdateName(tx TX, sender m.UserID, new_name string) (err error) {
 	if event_id, err = NewStateEvent(tx, sender, r.ID, "m.room.name", "", content); err != nil {
 		return
 	} else {
-		_, err = tx.Exec(`INSERT OR REPLACE
-            INTO room_names (
-                event_id,
-                room_id,
-                name)
-            VALUES (?, ?, ?)`, event_id.String(), r.ID.String(), new_name)
+		_, err = tx.Exec(`
+			INSERT OR REPLACE
+			INTO room_names (
+				event_id,
+				room_id,
+				name)
+			VALUES (?, ?, ?)`, event_id.String(), r.ID.String(), new_name)
 		return
 	}
 }
@@ -290,12 +199,13 @@ func (r *Room) UpdateTopic(tx TX, sender m.UserID, new_topic string) (err error)
 	if event_id, err = NewStateEvent(tx, sender, r.ID, "m.room.topic", "", content); err != nil {
 		return
 	} else {
-		_, err = tx.Exec(`INSERT OR REPLACE
-            INTO room_topics (
-                event_id,
-                room_id,
-                topic)
-            VALUES (?, ?, ?)`, event_id.String(), r.ID.String(), new_topic)
+		_, err = tx.Exec(`
+			INSERT OR REPLACE
+			INTO room_topics (
+				event_id,
+				room_id,
+				topic)
+			VALUES (?, ?, ?)`, event_id.String(), r.ID.String(), new_topic)
 		return
 	}
 }
@@ -306,13 +216,14 @@ func (r *Room) UpdateMember(tx TX, sender m.UserID, target m.UserID, new_members
 	if _, err = NewStateEvent(tx, sender, r.ID, "m.room.member", target.String(), content); err != nil {
 		return
 	} else {
-		_, err = tx.Exec(`INSERT OR REPLACE
-            INTO room_memberships (
-                event_id,
-                room_id,
-                user_id,
-                membership)
-            VALUES (?, ?, ?, ?)`, event_id.String(), r.ID.String(), target.String(), string(new_membership))
+		_, err = tx.Exec(`
+			INSERT OR REPLACE
+			INTO room_memberships (
+				event_id,
+				room_id,
+				user_id,
+				membership)
+			VALUES (?, ?, ?, ?)`, event_id.String(), r.ID.String(), target.String(), string(new_membership))
 		return
 	}
 }
@@ -333,13 +244,14 @@ func (r *Room) UpdateAliases(tx TX, sender m.UserID, new_aliases []m.RoomAlias) 
 	} else {
 		for i := range new_aliases {
 			alias := new_aliases[i]
-			_, err = tx.Exec(`INSERT OR REPLACE
-            INTO room_aliases (
-                event_id,
-                room_id,
-                room_alias,
-                server)
-            VALUES (?, ?, ?, ?)`, event_id.String(), r.ID.String(), alias.String(), alias.Domain())
+			_, err = tx.Exec(`
+				INSERT OR REPLACE
+				INTO room_aliases (
+					event_id,
+					room_id,
+					room_alias,
+					server)
+				VALUES (?, ?, ?, ?)`, event_id.String(), r.ID.String(), alias.String(), alias.Domain())
 		}
 		return
 	}
@@ -359,29 +271,31 @@ func (r *Room) UpdatePowerLevels(tx TX, sender m.UserID, new_levels map[m.UserID
 	if event_id, err = NewStateEvent(tx, sender, r.ID, "m.room.power_levels", "", levels); err != nil {
 		return
 	} else {
-		if _, err = tx.Exec(`DELETE
-            FROM room_power_levels
-            WHERE room_id=?`, r.ID.String()); err != nil {
+		if _, err = tx.Exec(`
+			DELETE FROM room_power_levels
+			WHERE room_id=?`, r.ID.String()); err != nil {
 			return
 		}
 		for user_id := range new_levels {
-			if _, err = tx.Exec(`INSERT OR REPLACE
-            INTO room_power_levels (
-                event_id,
-                room_id,
-                user_id,
-                level)
-            VALUES (?, ?, ?, ?)`, event_id.String(), r.ID.String(), user_id.String(), new_levels[user_id]); err != nil {
+			if _, err = tx.Exec(`
+				INSERT OR REPLACE
+				INTO room_power_levels (
+					event_id,
+					room_id,
+					user_id,
+					level)
+				VALUES (?, ?, ?, ?)`, event_id.String(), r.ID.String(), user_id.String(), new_levels[user_id]); err != nil {
 				return
 			}
 		}
 		if default_level != nil {
-			_, err = tx.Exec(`INSERT OR REPLACE
-                INTO room_default_levels (
-                    event_id,
-                    room_id,
-                    level)
-                VALUES (?, ?, ?)`, event_id.String(), r.ID.String(), default_level)
+			_, err = tx.Exec(`
+				INSERT OR REPLACE
+				INTO room_default_levels (
+					event_id,
+					room_id,
+					level)
+				VALUES (?, ?, ?)`, event_id.String(), r.ID.String(), default_level)
 		}
 	}
 	return
@@ -391,12 +305,13 @@ func (r *Room) UpdateAddStateLevel(tx TX, sender m.UserID, new_level int64) (err
 	var event_id m.EventID
 	content := map[string]interface{}{"level": new_level}
 	if event_id, err = NewStateEvent(tx, sender, r.ID, "m.room.add_state_level", "", content); err != nil {
-		_, err = tx.Exec(`INSERT OR REPLACE
-            INTO room_add_state_levels (
-                event_id,
-                room_id,
-                level)
-            VALUES (?, ?, ?)`, event_id.String(), r.ID.String(), new_level)
+		_, err = tx.Exec(`
+			INSERT OR REPLACE
+			INTO room_add_state_levels (
+				event_id,
+				room_id,
+				level)
+			VALUES (?, ?, ?)`, event_id.String(), r.ID.String(), new_level)
 	}
 	return
 }
@@ -405,20 +320,22 @@ func (r *Room) UpdateSendEventLevel(tx TX, sender m.UserID, new_level int64) (er
 	var event_id m.EventID
 	content := map[string]interface{}{"level": new_level}
 	if event_id, err = NewStateEvent(tx, sender, r.ID, "m.room.send_event_level", "", content); err != nil {
-		_, err = tx.Exec(`INSERT OR REPLACE
-            INTO room_send_event_levels (
-                event_id,
-                room_id,
-                level)
-            VALUES (?, ?, ?)`, event_id.String(), r.ID.String(), new_level)
+		_, err = tx.Exec(`
+			INSERT OR REPLACE
+			INTO room_send_event_levels (
+				event_id,
+				room_id,
+				level)
+			VALUES (?, ?, ?)`, event_id.String(), r.ID.String(), new_level)
 	}
 	return
 }
 
 func (r *Room) GetOpsLevels(db DBI) (ban int64, kick int64, redact int64, err error) {
-	row := db.QueryRow(`SELECT ban_level, kick_level, redact_level
-        FROM room_ops_levels
-        WHERE room_id=?`, r.ID.String())
+	row := db.QueryRow(`
+		SELECT ban_level, kick_level, redact_level
+		FROM room_ops_levels
+		WHERE room_id=?`, r.ID.String())
 	err = row.Scan(&ban, &kick, &redact)
 	return
 }
@@ -452,14 +369,15 @@ func (r *Room) UpdateOpsLevel(tx TX, sender m.UserID, new_levels map[string]int6
 		return
 	}
 	if event_id, err = NewStateEvent(tx, sender, r.ID, "m.room.ops_levels", "", content); err != nil {
-		_, err = tx.Exec(`INSERT OR REPLACE
-            INTO room_ops_levels (
-                event_id,
-                room_id,
-                kick_level,
-                ban_level,
-                redact_level)
-            VALUES (?, ?, ?, ?, ?)`, event_id.String(), r.ID.String(), content["kick_level"], content["ban_level"], content["redact_level"])
+		_, err = tx.Exec(`
+			INSERT OR REPLACE
+			INTO room_ops_levels (
+				event_id,
+				room_id,
+				kick_level,
+				ban_level,
+				redact_level)
+			VALUES (?, ?, ?, ?, ?)`, event_id.String(), r.ID.String(), content["kick_level"], content["ban_level"], content["redact_level"])
 	}
 	return
 }

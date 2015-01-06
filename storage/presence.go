@@ -12,19 +12,7 @@
 
 package storage
 
-import (
-	"time"
-)
-
-const presence_table = `
-CREATE TABLE IF NOT EXISTS
-presence (
-    user_id INTEGER NOT NULL,
-    state INTEGER,
-    status_msg TEXT,
-    mtime INTEGER,
-    FOREIGN KEY(user_id) REFERENCES users(id)
-)`
+import ()
 
 type PresenceState int
 
@@ -64,8 +52,11 @@ func (p PresenceState) String() string {
 }
 
 func (u *User) UpdatePresence(db DBI, newpresence PresenceState, message string) error {
-	now := time.Now().UnixNano() / int64(time.Millisecond)
-	result, err := db.Exec("INSERT OR FAIL INTO presence VALUES(?,?,?,?)", u.ID, int(newpresence), message, now)
+	now := Now()
+	result, err := db.Exec(`
+		INSERT OR FAIL
+		INTO presence
+		VALUES(?,?,?,?)`, u.ID, int(newpresence), message, now)
 	if err != nil {
 		return err
 	}
@@ -82,9 +73,10 @@ func (u *User) GetPresence(db DBI) (*Presence, error) {
 		msg   string
 		mtime int64
 	)
-	row := db.QueryRow(`SELECT state, status_msg mtime
+	row := db.QueryRow(`
+		SELECT state, status_msg mtime
 		FROM presence
-		WHERE user_id=?`)
+		WHERE user_id=?`, u.UserID.String())
 	if err := row.Scan(&state, &msg, &mtime); err != nil {
 		return nil, err
 	}

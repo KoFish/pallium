@@ -14,30 +14,8 @@ package storage
 
 import (
 	"bytes"
-	"crypto/rand"
-	"crypto/sha512"
-	"encoding/hex"
 	m "github.com/KoFish/pallium/matrix"
 	o "github.com/KoFish/pallium/objects"
-	"time"
-)
-
-const user_table = `
-CREATE TABLE IF NOT EXISTS
-users(
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  user_id TEXT,
-  password TEXT,
-  salt TEXT,
-  creation_ts INTEGER,
-  UNIQUE(user_id)
-)`
-
-type (
-	DBID      int64
-	Token     string
-	Password  string
-	Timestamp int64
 )
 
 type PasswordHash struct {
@@ -53,8 +31,59 @@ type User struct {
 	Profile  *Profile
 }
 
+func CreateUser(db DBI, user_id m.UserID) (*User, error) {
+	now := Now()
+	result, err := db.Exec(`
+		INSERT OR FAIL
+			INTO users (
+				user_id,
+				password,
+				salt,
+				creation_ts)
+			VALUES (?, '', '', ?)`, user_id.String(), now)
+	if err != nil {
+		return nil, err
+	}
+	if row_id, err := result.LastInsertId(); err != nil {
+		panic("matrix: could not get last insert id")
+	} else {
+		return &User{
+			ID:      DBID(row_id),
+			UserID:  user_id,
+			Created: Timestamp(now),
+		}, nil
+	}
+}
+
+func GetUser(db DBI, uid m.UserID) (*User, error) {
+	row := db.QueryRow(`
+		SELECT id, password, salt, creation_ts
+			FROM users
+			WHERE user_id=?`, uid.String())
+	var (
+		id          int64
+		password    string
+		salt        string
+		creation_ts int64
+	)
+	if err := row.Scan(&id, &password, &salt, &creation_ts); err != nil {
+		return nil, err
+	}
+	return &User{
+		ID:       DBID(id),
+		UserID:   uid,
+		Password: PasswordHash{hash: password, salt: salt},
+		Created:  Timestamp(creation_ts),
+		Profile:  nil,
+	}, nil
+}
+
 func GetUserByToken(db DBI, token Token) (*User, error) {
-	row := db.QueryRow("SELECT users.id, users.user_id, users.password, users.salt, users.creation_ts FROM users, access_tokens WHERE access_tokens.token=? AND users.id=access_tokens.user_id", string(token))
+	row := db.QueryRow(`
+		SELECT users.id, users.user_id, users.password, users.salt, users.creation_ts
+			FROM users, access_tokens
+			WHERE access_tokens.token=?
+				AND users.id=access_tokens.user_id`, string(token))
 	var (
 		id          int64
 		user_id     string
@@ -70,30 +99,22 @@ func GetUserByToken(db DBI, token Token) (*User, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &User{DBID(id), uid, PasswordHash{password, salt}, Timestamp(creation_ts), nil}, nil
-}
-
-func GetUser(db DBI, uid m.UserID) (*User, error) {
-	row := db.QueryRow("SELECT id, password, salt, creation_ts FROM users WHERE user_id=?", uid.String())
-	var (
-		id          int64
-		password    string
-		salt        string
-		creation_ts int64
-	)
-	if err := row.Scan(&id, &password, &salt, &creation_ts); err != nil {
-		return nil, err
-	}
-	return &User{DBID(id), uid, PasswordHash{password, salt}, Timestamp(creation_ts), nil}, nil
+	return &User{
+		ID:       DBID(id),
+		UserID:   uid,
+		Password: PasswordHash{hash: password, salt: salt},
+		Created:  Timestamp(creation_ts),
+		Profile:  nil,
+	}, nil
 }
 
 // Fetch the users joined rooms and return it in a list for initial sync.
 // limit is used to limit the number of messages that is returned for each room.
 func (u *User) GetRoomMemberships(db DBI, limit uint64) ([]o.InitialSyncRoomData, error) {
-	rows, err := db.Query(
-		`SELECT r.room_id as id
-	FROM room_memberships r
-	WHERE r.user_id = ? `, u.UserID.String())
+	rows, err := db.Query(`
+		SELECT r.room_id as id
+			FROM room_memberships AS r
+			WHERE r.user_id = ? `, u.UserID.String())
 
 	if err != nil {
 		return nil, err
@@ -109,7 +130,11 @@ func (u *User) GetRoomMemberships(db DBI, limit uint64) ([]o.InitialSyncRoomData
 		if err != nil {
 			return nil, err
 		}
-		room := o.InitialSyncRoomData{Membership: "joined", RoomID: roomId, State: []o.Event{}}
+		room := o.InitialSyncRoomData{
+			Membership: "joined",
+			RoomID:     roomId,
+			State:      []o.Event{},
+		}
 		rooms = append(rooms, room)
 	}
 
@@ -121,31 +146,11 @@ func (u *User) GetInitialPresence(db DBI) ([]o.InitialSyncEvent, error) {
 	return []o.InitialSyncEvent{}, nil
 }
 
-func CreateUser(db DBI, user_id m.UserID) (*User, error) {
-	now := time.Now().Unix()
-	result, err := db.Exec(`INSERT OR FAIL
-		INTO users (
-			user_id,
-			password,
-			salt,
-			creation_ts)
-		VALUES (?, '', '', ?)`, user_id.String(), now)
-	if err != nil {
-		return nil, err
-	}
-	if row_id, err := result.LastInsertId(); err != nil {
-		panic("matrix: could not get last insert id")
-	} else {
-		return &User{
-			ID:      DBID(row_id),
-			UserID:  user_id,
-			Created: Timestamp(now),
-		}, nil
-	}
-}
-
 func (u *User) UpdatePassword(db DBI, hash PasswordHash) error {
-	result, err := db.Exec("UPDATE OR FAIL users SET password=?, salt=? WHERE id=?", hash.Hash(), hash.Salt(), u.ID)
+	result, err := db.Exec(`
+		UPDATE OR FAIL users
+			SET password=?, salt=?
+			WHERE id=?`, hash.Hash(), hash.Salt(), u.ID)
 	if err != nil {
 		return err
 	}
@@ -161,7 +166,7 @@ func (u *User) UpdatePassword(db DBI, hash PasswordHash) error {
 
 func (u *User) SetPassword(db DBI, passwordstring string) error {
 	password := Password(passwordstring)
-	salt, err := GenerateSalt()
+	salt, err := generateSalt()
 	if err != nil {
 		return err
 	}
@@ -172,19 +177,8 @@ func (u *User) SetPassword(db DBI, passwordstring string) error {
 	return err
 }
 
-func GenerateSalt() (string, error) {
-	b := make([]byte, 64)
-	if _, err := rand.Read(b); err != nil {
-		return "", err
-	}
-	hash := sha512.Sum512(b)
-	return hex.EncodeToString(hash[:]), nil
-}
-
 func (p Password) MakeHash(salt string) PasswordHash {
-	salted := string(p) + salt
-	hash_bytes := sha512.Sum512([]byte(salted))
-	hash := hex.EncodeToString(hash_bytes[:])
+	hash := makeHash(string(p), salt)
 	return PasswordHash{hash, salt}
 }
 

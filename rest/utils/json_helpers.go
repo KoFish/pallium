@@ -66,6 +66,9 @@ func RequireAuth(fn AuthJSONReply) JSONReply {
 	}
 }
 
+// JSONReply wrapper that checks for a `txnId` URL component. If that exists
+// and the request is a PUT request the value is checked agains the previous
+// txnID sent by this particular user (as identified by the token sent.
 func TxnID(fn JSONReply) JSONReply {
 	return func(r *http.Request) (interface{}, error) {
 		txnid, txnok := mux.Vars(r)["txnId"]

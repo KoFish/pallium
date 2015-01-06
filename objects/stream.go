@@ -12,7 +12,7 @@
 
 // TODO(): This code needs to be moved to some other place in pallium. This is
 //         not rest specific code.
-package utils
+package objects
 
 import (
 	"errors"
