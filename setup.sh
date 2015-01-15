@@ -1,6 +1,6 @@
 #!/bin/sh
 
-CWD=`pwd`
+CWD=`dirname "$(readlink -f "$0")"`
 BINDATA_PKG="github.com/jteeuwen/go-bindata/..."
 
 if [ ! -n "${GOPATH}" ]; then
