@@ -1,7 +1,7 @@
 #!/bin/sh
 
-CWD=`realpath $(dirname $0)`
-BINDATA_PKG="github.com/jteeuwen/go-bindata"
+CWD=`dirname $(readlink -f $0)`
+BINDATA_PKG="github.com/jteeuwen/go-bindata/..."
 
 if [ ! -n "${GOPATH}" ]; then
     echo "GOPATH not set"
@@ -9,7 +9,7 @@ if [ ! -n "${GOPATH}" ]; then
 fi
 
 echo " # Get go-bindata"
-go get "$BINDATA_PKG"
+go get -u "$BINDATA_PKG"
 echo " # Install go-bindata"
 go install "$BINDATA_PKG"
 
